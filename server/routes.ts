@@ -69,11 +69,24 @@ What would you like to do today?
       const twilioSignature = req.headers["x-twilio-signature"] as string;
       const url = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
 
+      console.log("Incoming webhook request:", {
+        signature: twilioSignature,
+        url,
+        body: req.body
+      });
+
       if (!validateTwilioRequest(twilioSignature, url, req.body)) {
+        console.error("Invalid Twilio signature");
         return res.status(401).send("Invalid signature");
       }
 
       const { From, Body, MediaUrl0 } = req.body;
+
+      console.log("Processing WhatsApp message:", {
+        from: From,
+        body: Body,
+        mediaUrl: MediaUrl0
+      });
 
       await handleIncomingMessage(From, Body, MediaUrl0);
 
