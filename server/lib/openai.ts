@@ -27,6 +27,12 @@ export interface SkinToneAnalysis {
 
 export async function analyzeSkinTone(imageBase64: string): Promise<SkinToneAnalysis> {
   try {
+    console.log("Starting skin tone analysis with OpenAI...");
+    
+    // For debugging
+    const imagePreview = imageBase64.substring(0, 50) + "..."; 
+    console.log(`Base64 image preview: ${imagePreview}`);
+    
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [

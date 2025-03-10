@@ -46,39 +46,32 @@ export async function sendWhatsAppMessage(to: string, message: string): Promise<
 }
 
 export function validateTwilioRequest(
-  signature: string,
+  twilioSignature: string,
   url: string,
-  params: Record<string, unknown>
+  params: any
 ): boolean {
   try {
-    const twilioSignature = signature;
-    const authToken = process.env.TWILIO_AUTH_TOKEN;
-
-    if (!authToken) {
-      throw new Error("TWILIO_AUTH_TOKEN is not set");
-    }
-
-    // Log validation details
-    console.log("Validating Twilio request with:", {
-      authToken: authToken ? "present" : "missing",
-      signature: twilioSignature,
-      url,
-      paramKeys: Object.keys(params)
-    });
-
-    // During testing, we'll be more permissive with validation
+    // In development, allow requests to pass through even if they don't validate
     if (process.env.NODE_ENV === "development") {
       console.log("Development mode: Allowing webhook requests");
       return true;
     }
 
+    console.log("Validating Twilio request with:", {
+      authToken: process.env.TWILIO_AUTH_TOKEN ? "present" : "missing",
+      signature: twilioSignature,
+      url,
+      paramKeys: params ? Object.keys(params) : []
+    });
+
+    // Real validation logic
     return twilio.validateRequest(
-      authToken,
+      process.env.TWILIO_AUTH_TOKEN || "",
       twilioSignature,
       url,
       params
     );
-  } catch (error: unknown) {
+  } catch (error) {
     console.error("Twilio validation error:", error);
     return false;
   }
