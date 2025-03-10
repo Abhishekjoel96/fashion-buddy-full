@@ -58,6 +58,20 @@ export function validateTwilioRequest(
       throw new Error("TWILIO_AUTH_TOKEN is not set");
     }
 
+    // Log validation details
+    console.log("Validating Twilio request with:", {
+      authToken: authToken ? "present" : "missing",
+      signature: twilioSignature,
+      url,
+      paramKeys: Object.keys(params)
+    });
+
+    // During testing, we'll be more permissive with validation
+    if (process.env.NODE_ENV === "development") {
+      console.log("Development mode: Allowing webhook requests");
+      return true;
+    }
+
     return twilio.validateRequest(
       authToken,
       twilioSignature,
