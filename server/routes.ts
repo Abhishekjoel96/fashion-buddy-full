@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { validateTwilioRequest } from "./lib/twilio";
+import { validateTwilioRequest, sendWhatsAppMessage } from "./lib/twilio";
 import { handleIncomingMessage } from "./lib/messageHandler";
 import { storage } from "./storage";
 
@@ -8,28 +8,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stats endpoint for dashboard
   app.get("/api/stats", async (_req, res) => {
     try {
-      // Get all users and sessions
-      const users = Array.from(storage.users.values());
-      const sessions = Array.from(storage.sessions.values());
-
-      // Calculate stats
-      const now = new Date();
-      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
+      // Get all users and sessions from storage instance
       const stats = {
-        activeUsers: users.length,
-        messagesToday: sessions.filter(session => 
-          session.lastInteraction > oneDayAgo
-        ).length,
-        recommendations: sessions.filter(session => 
-          session.currentState === "SHOWING_PRODUCTS"
-        ).length,
+        activeUsers: await storage.getUserCount(),
+        messagesToday: await storage.getRecentSessionCount(24),
+        recommendations: await storage.getProductRecommendationCount(),
       };
 
       res.json(stats);
     } catch (error) {
       console.error("Stats error:", error);
       res.status(500).json({ error: "Failed to get stats" });
+    }
+  });
+
+  // Endpoint to start a new chat
+  app.post("/api/start-chat", async (req, res) => {
+    try {
+      const { name, phoneNumber } = req.body;
+
+      // Create or get user
+      let user = await storage.getUser(phoneNumber);
+      if (!user) {
+        user = await storage.createUser({
+          phoneNumber,
+          skinTone: null,
+          preferences: null
+        });
+      }
+
+      // Send welcome message with user's name
+      const welcomeMessage = `Hello ${name}! 👋 Welcome to WhatsApp Fashion Buddy! 
+I can help you find clothes that match your skin tone or try on clothes virtually. 
+What would you like to do today?
+
+1. Color Analysis & Shopping Recommendations
+2. Virtual Try-On`;
+
+      await sendWhatsAppMessage(phoneNumber, welcomeMessage);
+
+      // Create new session
+      await storage.createSession({
+        userId: user.id,
+        currentState: "WELCOME",
+        lastInteraction: new Date(),
+        context: null
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Start chat error:", error);
+      res.status(500).json({ error: "Failed to start chat" });
     }
   });
 
