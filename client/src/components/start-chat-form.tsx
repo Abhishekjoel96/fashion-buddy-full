@@ -38,7 +38,7 @@ export default function StartChatForm() {
 
       toast({
         title: "Success!",
-        description: "To receive messages, please join our WhatsApp sandbox by sending 'join plenty-entirely' to +14155238886",
+        description: "Please check your WhatsApp for instructions on joining our sandbox environment. You'll need to send a join code to Twilio's WhatsApp number +14155238886",
       });
       form.reset();
     } catch (error) {
@@ -83,9 +83,10 @@ export default function StartChatForm() {
         <div className="text-sm text-muted-foreground mb-4">
           <p>Important: Before starting the chat:</p>
           <ol className="list-decimal pl-4 mt-2">
-            <li>Send "join plenty-entirely" to +14155238886 on WhatsApp</li>
-            <li>Wait for confirmation message from Twilio</li>
-            <li>Then click the button below to start your fashion consultation</li>
+            <li>First, you'll receive instructions via WhatsApp to join our sandbox</li>
+            <li>Send the provided join code to Twilio's WhatsApp number (+14155238886)</li>
+            <li>Wait for confirmation from Twilio</li>
+            <li>Then your fashion consultation will begin automatically</li>
           </ol>
         </div>
         <Button type="submit">Start WhatsApp Chat</Button>
