@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { MessageSquare, Users, ShoppingBag } from "lucide-react";
+import StartChatForm from "@/components/start-chat-form";
 
 export default function Dashboard() {
   const { data: stats } = useQuery({
@@ -10,8 +11,8 @@ export default function Dashboard() {
   return (
     <div className="container mx-auto p-8">
       <h1 className="text-4xl font-bold mb-8">WhatsApp Fashion Buddy Dashboard</h1>
-      
-      <div className="grid gap-4 md:grid-cols-3">
+
+      <div className="grid gap-4 md:grid-cols-3 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -48,6 +49,15 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle>Start a New Chat</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <StartChatForm />
+        </CardContent>
+      </Card>
     </div>
   );
 }
