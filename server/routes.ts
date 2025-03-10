@@ -65,14 +65,20 @@ What would you like to do today?
   // Twilio webhook for incoming WhatsApp messages
   app.post("/api/webhook", async (req, res) => {
     try {
+      // Log incoming request details
+      console.log("Webhook received:", {
+        headers: req.headers,
+        body: req.body,
+        url: `${req.protocol}://${req.get("host")}${req.originalUrl}`
+      });
+
       // Validate request is from Twilio
       const twilioSignature = req.headers["x-twilio-signature"] as string;
       const url = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
 
-      console.log("Incoming webhook request:", {
+      console.log("Validating Twilio request:", {
         signature: twilioSignature,
-        url,
-        body: req.body
+        url
       });
 
       if (!validateTwilioRequest(twilioSignature, url, req.body)) {
@@ -90,10 +96,14 @@ What would you like to do today?
 
       await handleIncomingMessage(From, Body, MediaUrl0);
 
-      res.status(200).send();
+      // Send TwiML response
+      res.set('Content-Type', 'text/xml');
+      res.send(`<?xml version="1.0" encoding="UTF-8"?><Response></Response>`);
     } catch (error) {
       console.error("Webhook error:", error);
-      res.status(500).json({ error: "Failed to process webhook" });
+      // Still send a valid TwiML response even on error
+      res.set('Content-Type', 'text/xml');
+      res.status(500).send(`<?xml version="1.0" encoding="UTF-8"?><Response></Response>`);
     }
   });
 
