@@ -62,6 +62,11 @@ What would you like to do today?
     }
   });
 
+  // Test endpoint to verify webhook URL is accessible
+  app.get("/api/webhook", (_req, res) => {
+    res.status(200).send("Webhook endpoint is active. Please use POST for Twilio WhatsApp messages.");
+  });
+
   // Twilio webhook for incoming WhatsApp messages
   app.post("/api/webhook", async (req, res) => {
     try {
@@ -69,7 +74,8 @@ What would you like to do today?
       console.log("Webhook received:", {
         headers: req.headers,
         body: req.body,
-        url: `${req.protocol}://${req.get("host")}${req.originalUrl}`
+        url: `${req.protocol}://${req.get("host")}${req.originalUrl}`,
+        method: req.method
       });
 
       // Validate request is from Twilio
@@ -78,7 +84,8 @@ What would you like to do today?
 
       console.log("Validating Twilio request:", {
         signature: twilioSignature,
-        url
+        url,
+        hasBody: !!req.body
       });
 
       if (!validateTwilioRequest(twilioSignature, url, req.body)) {
@@ -91,7 +98,8 @@ What would you like to do today?
       console.log("Processing WhatsApp message:", {
         from: From,
         body: Body,
-        mediaUrl: MediaUrl0
+        mediaUrl: MediaUrl0,
+        allParams: req.body
       });
 
       await handleIncomingMessage(From, Body, MediaUrl0);
