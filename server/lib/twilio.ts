@@ -21,6 +21,16 @@ export async function sendWhatsAppMessage(to: string, message: string): Promise<
 
     console.log(`Sending from ${fromNumber} to ${toNumber}`);
 
+    // Get sandbox information
+    const services = await client.messaging.v1.services.list();
+    const whatsappService = services.find(service => 
+      service.friendlyName?.toLowerCase().includes('whatsapp')
+    );
+
+    if (whatsappService) {
+      console.log(`WhatsApp Service Found: ${whatsappService.friendlyName}`);
+    }
+
     await client.messages.create({
       from: fromNumber,
       to: toNumber,
