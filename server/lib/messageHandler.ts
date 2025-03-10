@@ -69,11 +69,29 @@ export async function handleIncomingMessage(
           return;
         }
 
-        const imageResponse = await fetch(mediaUrl);
-        const imageBuffer = await imageResponse.arrayBuffer();
-        const base64Image = Buffer.from(imageBuffer).toString("base64");
-
-        analysis = await analyzeSkinTone(base64Image);
+        try {
+          const imageResponse = await fetch(mediaUrl);
+          const contentType = imageResponse.headers.get('content-type');
+          const imageBuffer = await imageResponse.arrayBuffer();
+          const base64Image = Buffer.from(imageBuffer).toString("base64");
+          
+          console.log(`Processing image: ${mediaUrl} with content type: ${contentType}`);
+          
+          // Send a response to user while analysis is happening
+          await sendWhatsAppMessage(
+            phoneNumber,
+            "I'm analyzing your photo now. This may take a moment..."
+          );
+          
+          analysis = await analyzeSkinTone(base64Image);
+        } catch (error) {
+          console.error("Image analysis error:", error);
+          await sendWhatsAppMessage(
+            phoneNumber,
+            "I had trouble analyzing your photo. Please try again with a clear selfie in JPEG or PNG format, taken in good lighting."
+          );
+          return;
+        }
 
         await storage.updateUser(user.id, {
           skinTone: analysis.tone,
