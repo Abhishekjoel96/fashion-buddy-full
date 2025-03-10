@@ -26,13 +26,23 @@ export default function StartChatForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      await apiRequest("POST", "/api/start-chat", values);
+      // Ensure phone number has country code
+      const phoneNumber = values.phoneNumber.startsWith('+') 
+        ? values.phoneNumber 
+        : `+${values.phoneNumber}`;
+
+      await apiRequest("POST", "/api/start-chat", { 
+        ...values, 
+        phoneNumber 
+      });
+
       toast({
         title: "Success!",
-        description: "You'll receive a WhatsApp message shortly.",
+        description: "To receive messages, please join our WhatsApp sandbox by sending 'join plenty-entirely' to +14155238886",
       });
       form.reset();
     } catch (error) {
+      console.error("Start chat error:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -70,6 +80,14 @@ export default function StartChatForm() {
             </FormItem>
           )}
         />
+        <div className="text-sm text-muted-foreground mb-4">
+          <p>Important: Before starting the chat:</p>
+          <ol className="list-decimal pl-4 mt-2">
+            <li>Send "join plenty-entirely" to +14155238886 on WhatsApp</li>
+            <li>Wait for confirmation message from Twilio</li>
+            <li>Then click the button below to start your fashion consultation</li>
+          </ol>
+        </div>
         <Button type="submit">Start WhatsApp Chat</Button>
       </form>
     </Form>
