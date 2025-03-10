@@ -1,0 +1,92 @@
+import { User, InsertUser, Session, InsertSession } from "@shared/schema";
+
+export interface IStorage {
+  getUser(phoneNumber: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, updates: Partial<User>): Promise<User>;
+  getSession(userId: number): Promise<Session | undefined>;
+  createSession(session: InsertSession): Promise<Session>;
+  updateSession(id: number, updates: Partial<Session>): Promise<Session>;
+}
+
+export class MemStorage implements IStorage {
+  private users: Map<number, User>;
+  private sessions: Map<number, Session>;
+  private currentUserId: number;
+  private currentSessionId: number;
+
+  constructor() {
+    this.users = new Map();
+    this.sessions = new Map();
+    this.currentUserId = 1;
+    this.currentSessionId = 1;
+  }
+
+  async getUser(phoneNumber: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.phoneNumber === phoneNumber
+    );
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const id = this.currentUserId++;
+    const user: User = {
+      id,
+      phoneNumber: insertUser.phoneNumber,
+      skinTone: insertUser.skinTone ?? null,
+      preferences: insertUser.preferences ?? null
+    };
+    this.users.set(id, user);
+    return user;
+  }
+
+  async updateUser(id: number, updates: Partial<User>): Promise<User> {
+    const user = this.users.get(id);
+    if (!user) throw new Error("User not found");
+
+    const updatedUser: User = {
+      ...user,
+      ...updates,
+      skinTone: updates.skinTone ?? user.skinTone,
+      preferences: updates.preferences ?? user.preferences
+    };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async getSession(userId: number): Promise<Session | undefined> {
+    return Array.from(this.sessions.values()).find(
+      (session) => session.userId === userId
+    );
+  }
+
+  async createSession(insertSession: InsertSession): Promise<Session> {
+    const id = this.currentSessionId++;
+    const session: Session = {
+      id,
+      userId: insertSession.userId,
+      currentState: insertSession.currentState,
+      lastInteraction: insertSession.lastInteraction,
+      context: insertSession.context ?? null
+    };
+    this.sessions.set(id, session);
+    return session;
+  }
+
+  async updateSession(id: number, updates: Partial<Session>): Promise<Session> {
+    const session = this.sessions.get(id);
+    if (!session) throw new Error("Session not found");
+
+    const updatedSession: Session = {
+      ...session,
+      ...updates,
+      currentState: updates.currentState ?? session.currentState,
+      lastInteraction: updates.lastInteraction ?? session.lastInteraction,
+      context: updates.context ?? session.context
+    };
+    this.sessions.set(id, updatedSession);
+    return updatedSession;
+  }
+}
+
+export const storage = new MemStorage();
