@@ -75,14 +75,26 @@ export async function handleIncomingMessage(
           const imageBuffer = await imageResponse.arrayBuffer();
           const base64Image = Buffer.from(imageBuffer).toString("base64");
           
-          console.log(`Processing image: ${mediaUrl} with content type: ${contentType}, size: ${imageBuffer.byteLength} bytes`);
+          console.log(`Processing image: ${mediaUrl}`);
+          console.log(`Image details: content-type: ${contentType}, size: ${imageBuffer.byteLength} bytes`);
+          console.log(`Message type: ${message ? 'Text message' : 'Image only'}, Media type from Twilio: ${req?.body?.MessageType || 'unknown'}`);
           
           // Validate image type and size
-          if (!contentType || (!contentType.includes('jpeg') && !contentType.includes('png') && !contentType.includes('image'))) {
+          if (!contentType || (!contentType.includes('jpeg') && !contentType.includes('png') && !contentType.includes('webp') && !contentType.includes('image'))) {
             console.warn(`Unsupported image format: ${contentType}`);
             await sendWhatsAppMessage(
               phoneNumber,
-              "Your image format isn't supported. Please send a JPEG or PNG photo."
+              "Your image format isn't supported. Please send a photo taken directly with your camera."
+            );
+            return;
+          }
+          
+          // Check if this is an actual image and not just XML response
+          if (contentType.includes('xml') || imageBuffer.byteLength < 1000) {
+            console.warn(`Received XML or too small image: ${contentType}, size: ${imageBuffer.byteLength}`);
+            await sendWhatsAppMessage(
+              phoneNumber,
+              "I couldn't process that image. Please send a clear selfie taken directly with your camera (not a sticker)."
             );
             return;
           }
