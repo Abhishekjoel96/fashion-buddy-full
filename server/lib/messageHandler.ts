@@ -1,7 +1,8 @@
 import { storage } from "../storage";
-import { sendWhatsAppMessage } from "./twilio";
+import { sendWhatsAppMessage, fetchTwilioMedia } from "./twilio";
 import { analyzeSkinTone, type SkinToneAnalysis } from "./openai";
 import { searchProducts } from "./shopping";
+
 
 const WELCOME_MESSAGE = `👋 Hello! Welcome to WhatsApp Fashion Buddy! 
 I can help you find clothes that match your skin tone or try on clothes virtually. 
@@ -13,8 +14,13 @@ What would you like to do today?
 export async function handleIncomingMessage(
   from: string,
   message: string,
-  mediaUrl?: string
-) {
+  mediaUrl?: string,
+  twilioDetails?: {
+    mediaContentType?: string;
+    messageType?: string;
+    requestBody?: any;
+  }
+): Promise<void> {
   try {
     const phoneNumber = from.replace("whatsapp:", "");
     let user = await storage.getUser(phoneNumber);
@@ -70,26 +76,72 @@ export async function handleIncomingMessage(
         }
 
         try {
-          const imageResponse = await fetch(mediaUrl);
-          const contentType = imageResponse.headers.get('content-type');
-          const imageBuffer = await imageResponse.arrayBuffer();
-          const base64Image = Buffer.from(imageBuffer).toString("base64");
-          
-          console.log(`Processing image: ${mediaUrl} with content type: ${contentType}`);
-          
+          // Use the fetchTwilioMedia function to properly authenticate when fetching the media
+          console.log(`Fetching image with authentication: ${mediaUrl}`);
+          const { buffer: imageBuffer, contentType } = await fetchTwilioMedia(mediaUrl);
+          const base64Image = imageBuffer.toString("base64");
+
+          console.log(`Successfully fetched image: ${mediaUrl}`);
+          console.log(`Image details: content-type: ${contentType}, size: ${imageBuffer.byteLength} bytes`);
+          console.log(`Message type: ${message ? 'Text message' : 'Image only'}, Media type from Twilio: ${twilioDetails?.messageType || 'unknown'}`);
+
+          // Validate image type and size
+          if (!contentType || (!contentType.includes('jpeg') && !contentType.includes('png') && !contentType.includes('webp') && !contentType.includes('image'))) {
+            console.warn(`Unsupported image format: ${contentType}`);
+            await sendWhatsAppMessage(
+              phoneNumber,
+              "Your image format isn't supported. Please send a photo taken directly with your camera."
+            );
+            return;
+          }
+
+          // Check if image is too small (probably not a valid image)
+          if (imageBuffer.byteLength < 1000) {
+            console.warn(`Image too small: ${imageBuffer.byteLength} bytes`);
+            await sendWhatsAppMessage(
+              phoneNumber,
+              "I couldn't process that image. Please send a clear selfie taken directly with your camera (not a sticker)."
+            );
+            return;
+          }
+
+          if (imageBuffer.byteLength > 4 * 1024 * 1024) {
+            console.warn(`Image too large: ${imageBuffer.byteLength} bytes`);
+            await sendWhatsAppMessage(
+              phoneNumber,
+              "Your image is too large. Please send a smaller photo (under 4MB)."
+            );
+            return;
+          }
+
           // Send a response to user while analysis is happening
           await sendWhatsAppMessage(
             phoneNumber,
             "I'm analyzing your photo now. This may take a moment..."
           );
-          
+
+          // Attempt skin tone analysis
           analysis = await analyzeSkinTone(base64Image);
+          console.log("Analysis completed successfully:", JSON.stringify(analysis, null, 2));
         } catch (error) {
           console.error("Image analysis error:", error);
-          await sendWhatsAppMessage(
-            phoneNumber,
-            "I had trouble analyzing your photo. Please try again with a clear selfie in JPEG or PNG format, taken in good lighting."
-          );
+
+          // More detailed error message
+          let errorMessage = "I had trouble analyzing your photo. ";
+
+          if (error instanceof Error) {
+            console.error("Error details:", error.message, error.stack);
+
+            if (error.message.includes("timeout") || error.message.includes("timed out")) {
+              errorMessage += "The analysis took too long to complete. ";
+            } else if (error.message.includes("format") || error.message.includes("invalid")) {
+              errorMessage += "The image format couldn't be processed. ";
+            }
+          }
+
+          errorMessage += "Please try again with a clear selfie in JPEG or PNG format, taken in good lighting, showing your face clearly.";
+
+          await sendWhatsAppMessage(phoneNumber, errorMessage);
           return;
         }
 
@@ -147,8 +199,13 @@ Would you like to see clothing recommendations in these colors?
           return;
         }
 
+        // Extract recommended colors from analysis or user data
+        const recommendedColors = analysis?.recommendedColors || 
+          (user.skinTone ? [user.skinTone] : ["blue", "black", "white"]);
+
+        // Use enhanced search with color array
         const products = await searchProducts(
-          `clothing ${analysis?.recommendedColors.join(" ") || user.skinTone}`,
+          recommendedColors,
           selectedBudget
         );
 

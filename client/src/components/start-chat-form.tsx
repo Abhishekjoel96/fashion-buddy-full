@@ -87,6 +87,7 @@ export default function StartChatForm() {
             <li>Send the provided join code to Twilio's WhatsApp number (+14155238886)</li>
             <li>Wait for confirmation from Twilio</li>
             <li>Then your fashion consultation will begin automatically</li>
+            <li>When asked for a selfie, take a photo directly with your camera (don't send stickers or saved images)</li>
           </ol>
         </div>
         <Button type="submit">Start WhatsApp Chat</Button>
