@@ -1,27 +1,7 @@
 import { storage } from "../storage";
-import { sendWhatsAppMessage } from "./twilio";
+import { sendWhatsAppMessage, fetchTwilioMedia } from "./twilio";
 import { analyzeSkinTone, type SkinToneAnalysis } from "./openai";
 import { searchProducts } from "./shopping";
-
-// Placeholder for the assumed authentication function.  Replace with your actual implementation.
-async function fetchTwilioMedia(mediaUrl: string) {
-  // Add your Twilio authentication logic here.  This might involve using a Twilio access token.
-  // Example using a hypothetical token:
-  const token = 'YOUR_TWILIO_ACCESS_TOKEN'; // Replace with your actual token retrieval method.
-  const response = await fetch(mediaUrl, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch media: ${response.status} ${response.statusText}`);
-  }
-
-  const contentType = response.headers.get('content-type');
-  const buffer = await response.arrayBuffer();
-  return { buffer: Buffer.from(buffer), contentType };
-}
 
 
 const WELCOME_MESSAGE = `👋 Hello! Welcome to WhatsApp Fashion Buddy! 
