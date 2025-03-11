@@ -147,8 +147,13 @@ Would you like to see clothing recommendations in these colors?
           return;
         }
 
+        // Extract recommended colors from analysis or user data
+        const recommendedColors = analysis?.recommendedColors || 
+          (user.skinTone ? [user.skinTone] : ["blue", "black", "white"]);
+        
+        // Use enhanced search with color array
         const products = await searchProducts(
-          `clothing ${analysis?.recommendedColors.join(" ") || user.skinTone}`,
+          recommendedColors,
           selectedBudget
         );
 
