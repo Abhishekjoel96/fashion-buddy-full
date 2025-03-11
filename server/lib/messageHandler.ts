@@ -3,6 +3,27 @@ import { sendWhatsAppMessage } from "./twilio";
 import { analyzeSkinTone, type SkinToneAnalysis } from "./openai";
 import { searchProducts } from "./shopping";
 
+// Placeholder for the assumed authentication function.  Replace with your actual implementation.
+async function fetchTwilioMedia(mediaUrl: string) {
+  // Add your Twilio authentication logic here.  This might involve using a Twilio access token.
+  // Example using a hypothetical token:
+  const token = 'YOUR_TWILIO_ACCESS_TOKEN'; // Replace with your actual token retrieval method.
+  const response = await fetch(mediaUrl, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch media: ${response.status} ${response.statusText}`);
+  }
+
+  const contentType = response.headers.get('content-type');
+  const buffer = await response.arrayBuffer();
+  return { buffer: Buffer.from(buffer), contentType };
+}
+
+
 const WELCOME_MESSAGE = `👋 Hello! Welcome to WhatsApp Fashion Buddy! 
 I can help you find clothes that match your skin tone or try on clothes virtually. 
 What would you like to do today?
@@ -75,12 +96,12 @@ export async function handleIncomingMessage(
         }
 
         try {
-          const imageResponse = await fetch(mediaUrl);
-          const contentType = imageResponse.headers.get('content-type');
-          const imageBuffer = await imageResponse.arrayBuffer();
-          const base64Image = Buffer.from(imageBuffer).toString("base64");
+          // Use the fetchTwilioMedia function to properly authenticate when fetching the media
+          console.log(`Fetching image with authentication: ${mediaUrl}`);
+          const { buffer: imageBuffer, contentType } = await fetchTwilioMedia(mediaUrl);
+          const base64Image = imageBuffer.toString("base64");
 
-          console.log(`Processing image: ${mediaUrl}`);
+          console.log(`Successfully fetched image: ${mediaUrl}`);
           console.log(`Image details: content-type: ${contentType}, size: ${imageBuffer.byteLength} bytes`);
           console.log(`Message type: ${message ? 'Text message' : 'Image only'}, Media type from Twilio: ${twilioDetails?.messageType || 'unknown'}`);
 
@@ -94,9 +115,9 @@ export async function handleIncomingMessage(
             return;
           }
 
-          // Check if this is an actual image and not just XML response
-          if (contentType.includes('xml') || imageBuffer.byteLength < 1000) {
-            console.warn(`Received XML or too small image: ${contentType}, size: ${imageBuffer.byteLength}`);
+          // Check if image is too small (probably not a valid image)
+          if (imageBuffer.byteLength < 1000) {
+            console.warn(`Image too small: ${imageBuffer.byteLength} bytes`);
             await sendWhatsAppMessage(
               phoneNumber,
               "I couldn't process that image. Please send a clear selfie taken directly with your camera (not a sticker)."
