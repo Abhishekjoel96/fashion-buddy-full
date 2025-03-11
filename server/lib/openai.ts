@@ -44,8 +44,18 @@ export async function analyzeSkinTone(imageBase64: string): Promise<SkinToneAnal
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     
     try {
+      // Try with both JPEG and PNG content types as fallbacks
+      const imageFormats = [
+        `data:image/jpeg;base64,${imageBase64}`,
+        `data:image/png;base64,${imageBase64}`,
+        `data:image/webp;base64,${imageBase64}`
+      ];
+      
+      // Use the first format as default
+      let imageUrl = imageFormats[0];
+      
       const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4o", // Using the latest vision model
         messages: [
           {
             role: "system",
@@ -56,8 +66,14 @@ export async function analyzeSkinTone(imageBase64: string): Promise<SkinToneAnal
           {
             "tone": "descriptive tone name",
             "undertone": "warm/cool/neutral",
-            "recommendedColors": ["color1", "color2", "color3"],
+            "recommendedColors": ["color1", "color2", "color3", "color4", "color5"],
             "colorsToAvoid": ["color1", "color2", "color3"]
+          }
+          
+          If the image is not clear or does not contain a human face, respond with an error message in this format:
+          {
+            "error": "detailed error description",
+            "suggestion": "what the user should do"
           }
 
           Choose the closest matching skin tone from the dataset and provide its recommended colors.`

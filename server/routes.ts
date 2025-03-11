@@ -93,16 +93,22 @@ What would you like to do today?
         return res.status(401).send("Invalid signature");
       }
 
-      const { From, Body, MediaUrl0 } = req.body;
+      const { From, Body, MediaUrl0, MediaContentType0, MessageType } = req.body;
 
       console.log("Processing WhatsApp message:", {
         from: From,
         body: Body,
         mediaUrl: MediaUrl0,
+        mediaContentType: MediaContentType0,
+        messageType: MessageType,
         allParams: req.body
       });
 
-      await handleIncomingMessage(From, Body, MediaUrl0);
+      await handleIncomingMessage(From, Body, MediaUrl0, {
+        mediaContentType: MediaContentType0,
+        messageType: MessageType,
+        requestBody: req.body
+      });
 
       // Send TwiML response
       res.set('Content-Type', 'text/xml');
