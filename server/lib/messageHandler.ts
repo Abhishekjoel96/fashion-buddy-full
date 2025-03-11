@@ -75,7 +75,26 @@ export async function handleIncomingMessage(
           const imageBuffer = await imageResponse.arrayBuffer();
           const base64Image = Buffer.from(imageBuffer).toString("base64");
           
-          console.log(`Processing image: ${mediaUrl} with content type: ${contentType}`);
+          console.log(`Processing image: ${mediaUrl} with content type: ${contentType}, size: ${imageBuffer.byteLength} bytes`);
+          
+          // Validate image type and size
+          if (!contentType || (!contentType.includes('jpeg') && !contentType.includes('png') && !contentType.includes('image'))) {
+            console.warn(`Unsupported image format: ${contentType}`);
+            await sendWhatsAppMessage(
+              phoneNumber,
+              "Your image format isn't supported. Please send a JPEG or PNG photo."
+            );
+            return;
+          }
+          
+          if (imageBuffer.byteLength > 4 * 1024 * 1024) {
+            console.warn(`Image too large: ${imageBuffer.byteLength} bytes`);
+            await sendWhatsAppMessage(
+              phoneNumber,
+              "Your image is too large. Please send a smaller photo (under 4MB)."
+            );
+            return;
+          }
           
           // Send a response to user while analysis is happening
           await sendWhatsAppMessage(
@@ -83,13 +102,28 @@ export async function handleIncomingMessage(
             "I'm analyzing your photo now. This may take a moment..."
           );
           
+          // Attempt skin tone analysis
           analysis = await analyzeSkinTone(base64Image);
+          console.log("Analysis completed successfully:", JSON.stringify(analysis, null, 2));
         } catch (error) {
           console.error("Image analysis error:", error);
-          await sendWhatsAppMessage(
-            phoneNumber,
-            "I had trouble analyzing your photo. Please try again with a clear selfie in JPEG or PNG format, taken in good lighting."
-          );
+          
+          // More detailed error message
+          let errorMessage = "I had trouble analyzing your photo. ";
+          
+          if (error instanceof Error) {
+            console.error("Error details:", error.message, error.stack);
+            
+            if (error.message.includes("timeout") || error.message.includes("timed out")) {
+              errorMessage += "The analysis took too long to complete. ";
+            } else if (error.message.includes("format") || error.message.includes("invalid")) {
+              errorMessage += "The image format couldn't be processed. ";
+            }
+          }
+          
+          errorMessage += "Please try again with a clear selfie in JPEG or PNG format, taken in good lighting, showing your face clearly.";
+          
+          await sendWhatsAppMessage(phoneNumber, errorMessage);
           return;
         }
 
