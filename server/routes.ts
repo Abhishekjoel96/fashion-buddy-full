@@ -33,17 +33,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user = await storage.createUser({
           phoneNumber,
           skinTone: null,
-          preferences: null
+          preferences: null,
+          name // Store the user's name
         });
+      } else if (name && !user.name) {
+        // Update existing user with name if provided
+        user = await storage.updateUser(user.id, { name });
       }
 
       // Send welcome message with user's name
-      const welcomeMessage = `Hello ${name}! 👋 Welcome to WhatsApp Fashion Buddy! 
+      const welcomeMessage = `Hello ${name || 'there'}! 👋 Welcome to WhatsApp Fashion Buddy! 
 I can help you find clothes that match your skin tone or try on clothes virtually. 
 What would you like to do today?
 
 1. Color Analysis & Shopping Recommendations
-2. Virtual Try-On`;
+2. Virtual Try-On
+3. End Chat`;
 
       await sendWhatsAppMessage(phoneNumber, welcomeMessage);
 
