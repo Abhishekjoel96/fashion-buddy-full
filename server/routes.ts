@@ -48,10 +48,7 @@ What would you like to do today?
 
 1. Color Analysis & Shopping Recommendations
 2. Virtual Try-On
-3. End Chat`;ay?
-
-1. Color Analysis & Shopping Recommendations
-2. Virtual Try-On`;
+3. End Chat`;
 
       await sendWhatsAppMessage(phoneNumber, welcomeMessage);
 
