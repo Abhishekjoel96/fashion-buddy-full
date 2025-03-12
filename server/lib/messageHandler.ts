@@ -1,4 +1,3 @@
-
 import { storage } from "../storage";
 import { sendWhatsAppMessage, fetchTwilioMedia } from "./twilio";
 import { analyzeSkinTone, type SkinToneAnalysis } from "./openai";
@@ -78,10 +77,10 @@ export async function handleIncomingMessage(
               analyzedImage: undefined
             }
           });
-          
+
           const responseMsg = "Great! Let's start by understanding your skin tone. Please send a clear, well-lit selfie of your face.";
           await sendWhatsAppMessage(phoneNumber, responseMsg);
-          
+
           await addConversationEntry(phoneNumber, {
             timestamp: new Date(),
             from: 'bot',
@@ -97,10 +96,10 @@ export async function handleIncomingMessage(
               analyzedImage: undefined
             }
           });
-          
+
           const responseMsg = "Great! For virtual try-on, I'll need a full-body photo of you. Please send a clear, well-lit full-body photo.";
           await sendWhatsAppMessage(phoneNumber, responseMsg);
-          
+
           await addConversationEntry(phoneNumber, {
             timestamp: new Date(),
             from: 'bot',
@@ -112,9 +111,9 @@ export async function handleIncomingMessage(
             lastInteraction: new Date(),
             context: null
           });
-          
+
           await sendWhatsAppMessage(phoneNumber, THANK_YOU_MESSAGE);
-          
+
           await addConversationEntry(phoneNumber, {
             timestamp: new Date(),
             from: 'bot',
@@ -125,7 +124,7 @@ export async function handleIncomingMessage(
             phoneNumber,
             "Please select a valid option (1-3):\n\n" + MAIN_MENU
           );
-          
+
           await addConversationEntry(phoneNumber, {
             timestamp: new Date(),
             from: 'bot',
@@ -206,7 +205,7 @@ Would you like to see clothing recommendations in these colors?
         });
 
         await sendWhatsAppMessage(phoneNumber, colorMessage);
-        
+
         await addConversationEntry(phoneNumber, {
           timestamp: new Date(),
           from: 'bot',
@@ -269,7 +268,7 @@ Would you like to see clothing recommendations in these colors?
         });
 
         await sendWhatsAppMessage(phoneNumber, productMessage);
-        
+
         await addConversationEntry(phoneNumber, {
           timestamp: new Date(),
           from: 'bot',
@@ -288,10 +287,10 @@ Would you like to see clothing recommendations in these colors?
               analyzedImage: session.context?.analyzedImage
             }
           });
-          
+
           const tryOnMsg = "Great! For virtual try-on, I'll need a full-body photo. Please send a clear, well-lit full-body photo.";
           await sendWhatsAppMessage(phoneNumber, tryOnMsg);
-          
+
           await addConversationEntry(phoneNumber, {
             timestamp: new Date(),
             from: 'bot',
@@ -343,7 +342,7 @@ Would you like to see clothing recommendations in these colors?
           });
 
           await sendWhatsAppMessage(phoneNumber, moreProductsMessage);
-          
+
           await addConversationEntry(phoneNumber, {
             timestamp: new Date(),
             from: 'bot',
@@ -355,9 +354,9 @@ Would you like to see clothing recommendations in these colors?
             lastInteraction: new Date(),
             context: null
           });
-          
+
           await sendWhatsAppMessage(phoneNumber, MAIN_MENU);
-          
+
           await addConversationEntry(phoneNumber, {
             timestamp: new Date(),
             from: 'bot',
@@ -382,10 +381,10 @@ Would you like to see clothing recommendations in these colors?
               analyzedImage: session.context?.analyzedImage
             }
           });
-          
+
           const tryOnMsg = "Great! For virtual try-on, I'll need a full-body photo. Please send a clear, well-lit full-body photo.";
           await sendWhatsAppMessage(phoneNumber, tryOnMsg);
-          
+
           await addConversationEntry(phoneNumber, {
             timestamp: new Date(),
             from: 'bot',
@@ -397,9 +396,9 @@ Would you like to see clothing recommendations in these colors?
             lastInteraction: new Date(),
             context: null
           });
-          
+
           await sendWhatsAppMessage(phoneNumber, MAIN_MENU);
-          
+
           await addConversationEntry(phoneNumber, {
             timestamp: new Date(),
             from: 'bot',
@@ -444,9 +443,9 @@ Would you like to see clothing recommendations in these colors?
                             "1. Describe the type of shirt (e.g., 'a blue formal shirt')\n" +
                             "2. Paste a link to a specific product\n" +
                             "3. Choose from our recommended items";
-          
+
           await sendWhatsAppMessage(phoneNumber, garmentMsg);
-          
+
           await addConversationEntry(phoneNumber, {
             timestamp: new Date(),
             from: 'bot',
@@ -454,9 +453,9 @@ Would you like to see clothing recommendations in these colors?
           });
         } catch (error) {
           console.error("Full-body image processing error:", error);
-          
+
           let errorMessage = "I had trouble processing your full-body photo. ";
-          
+
           if (error instanceof Error) {
             if (error.message.includes("timeout") || error.message.includes("timed out")) {
               errorMessage += "The processing took too long to complete. ";
@@ -464,9 +463,9 @@ Would you like to see clothing recommendations in these colors?
               errorMessage += "The image format couldn't be processed. ";
             }
           }
-          
+
           errorMessage += "Please try again with a clear full-body photo in good lighting.";
-          
+
           await sendWhatsAppMessage(phoneNumber, errorMessage);
           return;
         }
@@ -492,7 +491,7 @@ Would you like to see clothing recommendations in these colors?
             phoneNumber,
             "🔄 Processing your virtual try-on request. This may take a moment..."
           );
-          
+
           await addConversationEntry(phoneNumber, {
             timestamp: new Date(),
             from: 'bot',
@@ -506,7 +505,7 @@ Would you like to see clothing recommendations in these colors?
           }
 
           const resultImageBase64 = await virtualTryOn(bodyImage, message);
-          
+
           // Update session state
           await storage.updateSession(session.id, {
             currentState: "SHOWING_VIRTUAL_TRYON",
@@ -528,7 +527,7 @@ Would you like to see clothing recommendations in these colors?
             "3. End chat",
             resultImageBase64
           );
-          
+
           await addConversationEntry(phoneNumber, {
             timestamp: new Date(),
             from: 'bot',
@@ -537,7 +536,7 @@ Would you like to see clothing recommendations in these colors?
           });
         } catch (error) {
           console.error("Virtual try-on error:", error);
-          
+
           await sendWhatsAppMessage(
             phoneNumber,
             "I'm sorry, I couldn't process your virtual try-on request. Please try again with a different garment or photo.\n\n" +
@@ -545,7 +544,7 @@ Would you like to see clothing recommendations in these colors?
             "1. Try again\n" +
             "2. Back to main menu"
           );
-          
+
           await storage.updateSession(session.id, {
             currentState: "VIRTUAL_TRYON_ERROR",
             lastInteraction: new Date(),
@@ -569,14 +568,14 @@ Would you like to see clothing recommendations in these colors?
               analyzedImage: session.context?.analyzedImage
             }
           });
-          
+
           const garmentMsg = "Please tell me which shirt or t-shirt you'd like to try on. You can:\n\n" +
                            "1. Describe the type of shirt (e.g., 'a blue formal shirt')\n" +
                            "2. Paste a link to a specific product\n" +
                            "3. Choose from our recommended items";
-          
+
           await sendWhatsAppMessage(phoneNumber, garmentMsg);
-          
+
           await addConversationEntry(phoneNumber, {
             timestamp: new Date(),
             from: 'bot',
@@ -588,9 +587,9 @@ Would you like to see clothing recommendations in these colors?
             lastInteraction: new Date(),
             context: null
           });
-          
+
           await sendWhatsAppMessage(phoneNumber, MAIN_MENU);
-          
+
           await addConversationEntry(phoneNumber, {
             timestamp: new Date(),
             from: 'bot',
@@ -602,9 +601,9 @@ Would you like to see clothing recommendations in these colors?
             lastInteraction: new Date(),
             context: null
           });
-          
+
           await sendWhatsAppMessage(phoneNumber, THANK_YOU_MESSAGE);
-          
+
           await addConversationEntry(phoneNumber, {
             timestamp: new Date(),
             from: 'bot',
@@ -629,10 +628,10 @@ Would you like to see clothing recommendations in these colors?
               analyzedImage: undefined
             }
           });
-          
+
           const tryOnMsg = "Let's try again. Please send a clear, well-lit full-body photo.";
           await sendWhatsAppMessage(phoneNumber, tryOnMsg);
-          
+
           await addConversationEntry(phoneNumber, {
             timestamp: new Date(),
             from: 'bot',
@@ -644,9 +643,9 @@ Would you like to see clothing recommendations in these colors?
             lastInteraction: new Date(),
             context: null
           });
-          
+
           await sendWhatsAppMessage(phoneNumber, MAIN_MENU);
-          
+
           await addConversationEntry(phoneNumber, {
             timestamp: new Date(),
             from: 'bot',
@@ -667,7 +666,7 @@ Would you like to see clothing recommendations in these colors?
           context: null
         });
         await sendWhatsAppMessage(phoneNumber, MAIN_MENU);
-        
+
         await addConversationEntry(phoneNumber, {
           timestamp: new Date(),
           from: 'bot',
