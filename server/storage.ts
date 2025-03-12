@@ -27,7 +27,7 @@ export class DatabaseStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     try {
-      const [user] = await db.insert(users).values(insertUser).returning();
+      const [user] = await db.insert(users).values([insertUser]).returning();
       return user;
     } catch (error) {
       console.error("Database error in createUser:", error);
@@ -66,7 +66,7 @@ export class DatabaseStorage implements IStorage {
     try {
       const [session] = await db
         .insert(sessions)
-        .values(insertSession)
+        .values([insertSession])
         .returning();
       return session;
     } catch (error) {
@@ -127,5 +127,4 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Export a new instance of DatabaseStorage
 export const storage = new DatabaseStorage();
