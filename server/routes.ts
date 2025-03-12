@@ -8,7 +8,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stats endpoint for dashboard
   app.get("/api/stats", async (_req, res) => {
     try {
-      // Get all users and sessions from storage instance
       const stats = {
         activeUsers: await storage.getUserCount(),
         messagesToday: await storage.getRecentSessionCount(24),
@@ -25,7 +24,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Endpoint to start a new chat
   app.post("/api/start-chat", async (req, res) => {
     try {
-      const { name, phoneNumber } = req.body;
+      const { phoneNumber } = req.body;
 
       // Create or get user
       let user = await storage.getUser(phoneNumber);
@@ -33,16 +32,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user = await storage.createUser({
           phoneNumber,
           skinTone: null,
-          preferences: null,
-          name // Store the user's name
+          preferences: null
         });
-      } else if (name && !user.name) {
-        // Update existing user with name if provided
-        user = await storage.updateUser(user.id, { name });
       }
 
-      // Send welcome message with user's name
-      const welcomeMessage = `Hello ${name || 'there'}! 👋 Welcome to WhatsApp Fashion Buddy! 
+      // Send welcome message
+      const welcomeMessage = `Hello! 👋 Welcome to WhatsApp Fashion Buddy! 
 I can help you find clothes that match your skin tone or try on clothes virtually. 
 What would you like to do today?
 
@@ -86,15 +81,10 @@ What would you like to do today?
       // Validate request is from Twilio
       const twilioSignature = req.headers["x-twilio-signature"] as string;
       const url = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
-
-      console.log("Validating Twilio request:", {
-        signature: twilioSignature,
-        url,
-        hasBody: !!req.body
-      });
+      const params = req.body as Record<string, string>;
 
       // In development, bypass signature validation for testing
-      if (process.env.NODE_ENV !== "production" || validateTwilioRequest(twilioSignature, url, req.body)) {
+      if (process.env.NODE_ENV !== "production" || validateTwilioRequest(twilioSignature, url, params)) {
         const { From, Body, MediaUrl0, MediaContentType0, MessageType } = req.body;
 
         console.log("Processing WhatsApp message:", {
@@ -106,7 +96,6 @@ What would you like to do today?
           allParams: req.body
         });
 
-        // Add error handling around the message handler
         try {
           await handleIncomingMessage(From, Body, MediaUrl0, {
             mediaContentType: MediaContentType0,
