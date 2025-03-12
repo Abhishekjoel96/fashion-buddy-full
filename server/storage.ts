@@ -27,7 +27,11 @@ export class DatabaseStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     try {
-      const [user] = await db.insert(users).values([insertUser]).returning();
+      const [user] = await db.insert(users).values({
+        phoneNumber: insertUser.phoneNumber,
+        skinTone: insertUser.skinTone ?? null,
+        preferences: insertUser.preferences ?? null
+      }).returning();
       return user;
     } catch (error) {
       console.error("Database error in createUser:", error);
@@ -64,10 +68,12 @@ export class DatabaseStorage implements IStorage {
 
   async createSession(insertSession: InsertSession): Promise<Session> {
     try {
-      const [session] = await db
-        .insert(sessions)
-        .values([insertSession])
-        .returning();
+      const [session] = await db.insert(sessions).values({
+        userId: insertSession.userId,
+        currentState: insertSession.currentState,
+        lastInteraction: insertSession.lastInteraction,
+        context: insertSession.context ?? null
+      }).returning();
       return session;
     } catch (error) {
       console.error("Database error in createSession:", error);
