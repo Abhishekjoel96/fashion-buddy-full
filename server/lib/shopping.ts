@@ -1,4 +1,3 @@
-
 import axios from "axios";
 
 export interface ShoppingProduct {
@@ -24,20 +23,22 @@ interface SerpApiResponse {
  * @param colors Array of recommended colors
  * @param budget Budget range (e.g. "500-1500")
  * @param category Optional clothing category (e.g. "shirts", "dresses")
+ * @param alternate Flag to indicate alternate search parameters (incomplete implementation)
  * @returns Array of matching products
  */
 export async function searchProducts(
   colors: string[],
   budget?: string,
-  category: string = "clothing"
+  category: string = "clothing",
+  alternate = false
 ): Promise<ShoppingProduct[]> {
   try {
     // Construct a more targeted query with multiple colors
     const colorQuery = colors.slice(0, 3).join(" OR ");
     const query = `${category} ${colorQuery} indian fashion`;
-    
+
     console.log(`Searching products with query: ${query}, budget: ${budget}`);
-    
+
     const response = await axios.get<SerpApiResponse>(
       `https://serpapi.com/search.json?engine=google_shopping&q=${encodeURIComponent(
         query
@@ -55,7 +56,7 @@ export async function searchProducts(
       }))
       .filter((product: ShoppingProduct) => {
         if (!budget) return true;
-        
+
         // Parse budget range
         const [minPrice, maxPrice] = budget.split("-").map(Number);
         return product.price >= minPrice && product.price <= maxPrice;

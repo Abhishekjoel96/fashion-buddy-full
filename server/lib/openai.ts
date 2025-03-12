@@ -1,3 +1,52 @@
+
+import { OpenAI } from "openai";
+import { skinToneData } from "./skinToneData";
+
+// Initialize OpenAI client
+export const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+export interface SkinToneAnalysis {
+  tone: string;
+  undertone: string;
+  recommendedColors: string[];
+  colorsToAvoid: string[];
+}
+
+// Function to detect image format from binary data
+function detectImageFormat(buffer: Buffer): string {
+  // Check file magic numbers to determine format
+  if (buffer.length < 4) {
+    return 'unknown';
+  }
+  
+  // JPEG: Starts with FFD8FF
+  if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) {
+    return 'jpeg';
+  }
+  
+  // PNG: Starts with 89504E47 (hex for ‰PNG)
+  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) {
+    return 'png';
+  }
+  
+  // WEBP: Has "WEBP" at offset 8
+  if (buffer.length >= 12 && buffer.slice(8, 12).toString() === 'WEBP') {
+    return 'webp';
+  }
+  
+  // GIF: Starts with GIF87a or GIF89a
+  if (buffer.length >= 6 && 
+      (buffer.slice(0, 6).toString() === 'GIF87a' || 
+       buffer.slice(0, 6).toString() === 'GIF89a')) {
+    return 'gif';
+  }
+  
+  return 'unknown';
+}
+
+
 import OpenAI from "openai";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
@@ -44,23 +93,36 @@ export async function analyzeSkinTone(imageBase64: string): Promise<SkinToneAnal
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     
     try {
-      // Try with both JPEG and PNG content types as fallbacks
+      // Detect image format from the binary data
+      const imageBuffer = Buffer.from(imageBase64, 'base64');
+      const format = detectImageFormat(imageBuffer);
+      console.log(`Detected image format: ${format}`);
+      
+      // Create format-specific and fallback URLs
       const imageFormats = [
+        `data:image/${format};base64,${imageBase64}`,
         `data:image/jpeg;base64,${imageBase64}`,
         `data:image/png;base64,${imageBase64}`,
-        `data:image/webp;base64,${imageBase64}`
+        `data:image/webp;base64,${imageBase64}`,
+        `data:image;base64,${imageBase64}`  // Generic fallback
       ];
       
-      // Use the first format as default
+      // Use the detected format first
       let imageUrl = imageFormats[0];
+      let error;
       
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o", // Using the latest vision model
-        messages: [
-          {
-            role: "system",
-            content: `You are a skin tone analysis expert. Use the following comprehensive dataset to provide accurate color recommendations:
-            ${JSON.stringify(skinToneData, null, 2)}
+      // Try each format in succession until one works
+      for (const formatUrl of imageFormats) {
+        try {
+          console.log(`Attempting analysis with format: ${formatUrl.split(';')[0]}`);
+          
+          const response = await openai.chat.completions.create({
+            model: "gpt-4o", // Using the latest vision model
+            messages: [
+              {
+                role: "system",
+                content: `You are a skin tone analysis expert. Use the following comprehensive dataset to provide accurate color recommendations:
+                ${JSON.stringify(skinToneData, null, 2)}
 
           Analyze the image provided and return skin tone details matching this exact format:
           {
@@ -95,12 +157,38 @@ export async function analyzeSkinTone(imageBase64: string): Promise<SkinToneAnal
         }
       ],
       response_format: { type: "json_object" }
-    });
-
-    const content = response.choices[0].message.content;
-    if (!content) {
-      throw new Error("No content in OpenAI response");
-    }
+            });
+            
+            // If we reach here, the format worked
+            const content = response.choices[0].message.content;
+            if (!content) {
+              throw new Error("No content in OpenAI response");
+            }
+            
+            // Parse response as JSON
+            try {
+              const result = JSON.parse(content);
+              
+              // Check if there's an error field in the response
+              if (result.error) {
+                throw new Error(`Analysis error: ${result.error}. ${result.suggestion || ''}`);
+              }
+              
+              clearTimeout(timeoutId);
+              return result as SkinToneAnalysis;
+            } catch (jsonError) {
+              console.error("Error parsing OpenAI response:", jsonError);
+              throw new Error("Invalid response format from OpenAI");
+            }
+          } catch (analysisError) {
+            console.warn(`Analysis with format ${formatUrl.split(';')[0]} failed:`, analysisError);
+            error = analysisError;
+            // Continue to next format
+          }
+        }
+        
+        // If we've tried all formats and none worked, throw the last error
+        throw error || new Error("Failed to analyze image with any format");
 
     try {
       // Parse the JSON response
