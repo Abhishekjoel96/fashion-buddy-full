@@ -93,54 +93,51 @@ What would you like to do today?
         hasBody: !!req.body
       });
 
-      // In development, we'll bypass validation to troubleshoot
-      const validationResult = validateTwilioRequest(twilioSignature, url, req.body);
-      console.log(`Twilio validation result: ${validationResult}`);
-      
-      if (!validationResult && process.env.NODE_ENV === 'production') {
-        console.error("Invalid Twilio signature");
-        return res.status(401).send("Invalid signature");
-      }
+      // In development, bypass signature validation for testing
+      if (process.env.NODE_ENV !== "production" || validateTwilioRequest(twilioSignature, url, req.body)) {
+        const { From, Body, MediaUrl0, MediaContentType0, MessageType } = req.body;
 
-      const { From, Body, MediaUrl0, MediaContentType0, MessageType } = req.body;
-
-      console.log("Processing WhatsApp message:", {
-        from: From,
-        body: Body,
-        mediaUrl: MediaUrl0,
-        mediaContentType: MediaContentType0,
-        messageType: MessageType,
-        allParams: req.body
-      });
-
-      // Add error handling around the message handler
-      try {
-        await handleIncomingMessage(From, Body, MediaUrl0, {
+        console.log("Processing WhatsApp message:", {
+          from: From,
+          body: Body,
+          mediaUrl: MediaUrl0,
           mediaContentType: MediaContentType0,
           messageType: MessageType,
-          requestBody: req.body
+          allParams: req.body
         });
-        console.log("Successfully processed incoming message");
-      } catch (msgError) {
-        console.error("Error in handleIncomingMessage:", msgError);
-        
-        // Try to send a fallback message to the user
-        try {
-          if (From) {
-            await sendWhatsAppMessage(
-              From,
-              "Sorry, we encountered an error processing your message. Please try again."
-            );
-          }
-        } catch (fallbackError) {
-          console.error("Failed to send fallback message:", fallbackError);
-        }
-      }
 
-      // Send TwiML response
-      res.set('Content-Type', 'text/xml');
-      res.send(`<?xml version="1.0" encoding="UTF-8"?><Response></Response>`);
-      console.log("Webhook response sent successfully");
+        // Add error handling around the message handler
+        try {
+          await handleIncomingMessage(From, Body, MediaUrl0, {
+            mediaContentType: MediaContentType0,
+            messageType: MessageType,
+            requestBody: req.body
+          });
+          console.log("Successfully processed incoming message");
+        } catch (msgError) {
+          console.error("Error in handleIncomingMessage:", msgError);
+
+          // Try to send a fallback message to the user
+          try {
+            if (From) {
+              await sendWhatsAppMessage(
+                From,
+                "Sorry, we encountered an error processing your message. Please try again."
+              );
+            }
+          } catch (fallbackError) {
+            console.error("Failed to send fallback message:", fallbackError);
+          }
+        }
+
+        // Send TwiML response
+        res.set('Content-Type', 'text/xml');
+        res.send(`<?xml version="1.0" encoding="UTF-8"?><Response></Response>`);
+        console.log("Webhook response sent successfully");
+      } else {
+        console.error("Invalid Twilio signature");
+        res.status(401).send("Invalid signature");
+      }
     } catch (error) {
       console.error("Webhook error:", error);
       // Still send a valid TwiML response even on error
