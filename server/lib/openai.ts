@@ -46,11 +46,8 @@ function detectImageFormat(buffer: Buffer): string {
   return 'unknown';
 }
 
-
-import OpenAI from "openai";
-
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Export the openai instance for use in other modules
+export { openai };
 
 // Comprehensive skin tone dataset for RAG
 const skinToneData = [
