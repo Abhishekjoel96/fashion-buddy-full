@@ -1,6 +1,4 @@
-import { users, sessions, type User, type InsertUser, type Session, type InsertSession } from "@shared/schema";
-import { db } from "./db";
-import { eq, gt } from "drizzle-orm";
+import { User, InsertUser, Session, InsertSession } from "@shared/schema";
 
 export interface IStorage {
   getUser(phoneNumber: string): Promise<User | undefined>;
@@ -14,123 +12,102 @@ export interface IStorage {
   getProductRecommendationCount(): Promise<number>;
 }
 
-export class DatabaseStorage implements IStorage {
+export class MemStorage implements IStorage {
+  #users: Map<number, User>;
+  #sessions: Map<number, Session>;
+  #currentUserId: number;
+  #currentSessionId: number;
+
+  constructor() {
+    this.#users = new Map();
+    this.#sessions = new Map();
+    this.#currentUserId = 1;
+    this.#currentSessionId = 1;
+  }
+
   async getUser(phoneNumber: string): Promise<User | undefined> {
-    try {
-      const [user] = await db.select().from(users).where(eq(users.phoneNumber, phoneNumber));
-      return user;
-    } catch (error) {
-      console.error("Database error in getUser:", error);
-      throw new Error("Failed to get user");
-    }
+    return Array.from(this.#users.values()).find(
+      (user) => user.phoneNumber === phoneNumber
+    );
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    try {
-      const [user] = await db.insert(users).values({
-        phoneNumber: insertUser.phoneNumber,
-        skinTone: insertUser.skinTone ?? null,
-        preferences: insertUser.preferences ?? null
-      }).returning();
-      return user;
-    } catch (error) {
-      console.error("Database error in createUser:", error);
-      throw new Error("Failed to create user");
-    }
+    const id = this.#currentUserId++;
+    const user: User = {
+      id,
+      phoneNumber: insertUser.phoneNumber,
+      skinTone: insertUser.skinTone ?? null,
+      preferences: insertUser.preferences ?? null
+    };
+    this.#users.set(id, user);
+    return user;
   }
 
   async updateUser(id: number, updates: Partial<User>): Promise<User> {
-    try {
-      const [user] = await db
-        .update(users)
-        .set(updates)
-        .where(eq(users.id, id))
-        .returning();
-      return user;
-    } catch (error) {
-      console.error("Database error in updateUser:", error);
-      throw new Error("Failed to update user");
-    }
+    const user = this.#users.get(id);
+    if (!user) throw new Error("User not found");
+
+    const updatedUser: User = {
+      ...user,
+      ...updates,
+      skinTone: updates.skinTone ?? user.skinTone,
+      preferences: updates.preferences ?? user.preferences
+    };
+    this.#users.set(id, updatedUser);
+    return updatedUser;
   }
 
   async getSession(userId: number): Promise<Session | undefined> {
-    try {
-      const [session] = await db
-        .select()
-        .from(sessions)
-        .where(eq(sessions.userId, userId));
-      return session;
-    } catch (error) {
-      console.error("Database error in getSession:", error);
-      throw new Error("Failed to get session");
-    }
+    return Array.from(this.#sessions.values()).find(
+      (session) => session.userId === userId
+    );
   }
 
   async createSession(insertSession: InsertSession): Promise<Session> {
-    try {
-      const [session] = await db.insert(sessions).values({
-        userId: insertSession.userId,
-        currentState: insertSession.currentState,
-        lastInteraction: insertSession.lastInteraction,
-        context: insertSession.context ?? null
-      }).returning();
-      return session;
-    } catch (error) {
-      console.error("Database error in createSession:", error);
-      throw new Error("Failed to create session");
-    }
+    const id = this.#currentSessionId++;
+    const session: Session = {
+      id,
+      userId: insertSession.userId,
+      currentState: insertSession.currentState,
+      lastInteraction: insertSession.lastInteraction,
+      context: insertSession.context ?? null
+    };
+    this.#sessions.set(id, session);
+    return session;
   }
 
   async updateSession(id: number, updates: Partial<Session>): Promise<Session> {
-    try {
-      const [session] = await db
-        .update(sessions)
-        .set(updates)
-        .where(eq(sessions.id, id))
-        .returning();
-      return session;
-    } catch (error) {
-      console.error("Database error in updateSession:", error);
-      throw new Error("Failed to update session");
-    }
+    const session = this.#sessions.get(id);
+    if (!session) throw new Error("Session not found");
+
+    const updatedSession: Session = {
+      ...session,
+      ...updates,
+      currentState: updates.currentState ?? session.currentState,
+      lastInteraction: updates.lastInteraction ?? session.lastInteraction,
+      context: updates.context ?? session.context
+    };
+    this.#sessions.set(id, updatedSession);
+    return updatedSession;
   }
 
   async getUserCount(): Promise<number> {
-    try {
-      const result = await db.select().from(users);
-      return result.length;
-    } catch (error) {
-      console.error("Database error in getUserCount:", error);
-      throw new Error("Failed to get user count");
-    }
+    return this.#users.size;
   }
 
   async getRecentSessionCount(hours: number): Promise<number> {
-    try {
-      const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000);
-      const result = await db
-        .select()
-        .from(sessions)
-        .where(gt(sessions.lastInteraction, cutoff));
-      return result.length;
-    } catch (error) {
-      console.error("Database error in getRecentSessionCount:", error);
-      throw new Error("Failed to get recent session count");
-    }
+    const now = new Date();
+    const cutoff = new Date(now.getTime() - hours * 60 * 60 * 1000);
+    return Array.from(this.#sessions.values()).filter(
+      session => session.lastInteraction > cutoff
+    ).length;
   }
 
   async getProductRecommendationCount(): Promise<number> {
-    try {
-      const result = await db
-        .select()
-        .from(sessions)
-        .where(eq(sessions.currentState, "SHOWING_PRODUCTS"));
-      return result.length;
-    } catch (error) {
-      console.error("Database error in getProductRecommendationCount:", error);
-      throw new Error("Failed to get product recommendation count");
-    }
+    return Array.from(this.#sessions.values()).filter(
+      session => session.currentState === "SHOWING_PRODUCTS"
+    ).length;
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new MemStorage();
