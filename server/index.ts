@@ -1,20 +1,11 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { db, sql } from "./db";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -46,48 +37,33 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  try {
-    // Test database connection first
-    log("Testing database connection...");
-    await db.execute(sql`SELECT 1`);
-    log("Database connection successful");
+  const server = await registerRoutes(app);
 
-    const server = await registerRoutes(app);
+  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
 
-    // Global error handler
-    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-      const status = err.status || err.statusCode || 500;
-      const message = err.message || "Internal Server Error";
-      log(`Error: ${status} - ${message} - ${err.stack}`); //Improved logging
-      res.status(status).json({ message });
-    });
+    res.status(status).json({ message });
+    throw err;
+  });
 
-    const buildDir = path.join(__dirname, '..', 'build'); // Path to build directory
-
-    try {
-      if (process.env.NODE_ENV === "development") {
-        await setupVite(app, server);
-      } else {
-        if (fs.existsSync(buildDir)) { //Check if build directory exists
-          serveStatic(app); 
-        } else {
-          log("Build directory not found. Serving static files skipped.");
-        }
-      }
-
-      const port = 5000;
-      server.listen({
-        port,
-        host: "0.0.0.0",
-      }, () => {
-        log(`Server started successfully on port ${port}`);
-      });
-    } catch (error) {
-      console.error("Failed to start server:", error);
-      process.exit(1);
-    }
-  } catch (error) {
-    console.error("Database connection failed:", error);
-    process.exit(1);
+  // importantly only setup vite in development and after
+  // setting up all the other routes so the catch-all route
+  // doesn't interfere with the other routes
+  if (app.get("env") === "development") {
+    await setupVite(app, server);
+  } else {
+    serveStatic(app);
   }
+
+  // ALWAYS serve the app on port 5000
+  // this serves both the API and the client
+  const port = 5000;
+  server.listen({
+    port,
+    host: "0.0.0.0",
+    reusePort: true,
+  }, () => {
+    log(`serving on port ${port}`);
+  });
 })();

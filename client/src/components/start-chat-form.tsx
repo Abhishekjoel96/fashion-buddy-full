@@ -37,13 +37,8 @@ export default function StartChatForm() {
       });
 
       toast({
-        title: "Important: Connect to WhatsApp Sandbox First",
-        description: `
-          1. Find your Twilio number (+14155238886)
-          2. Send "join your-sandbox-keyword" to this number (get the exact keyword from your Twilio Console)
-          3. Wait for confirmation before proceeding
-          4. Once connected, you can start your fashion consultation!
-        `,
+        title: "Success!",
+        description: "Please check your WhatsApp for instructions on joining our sandbox environment. You'll need to send a join code to Twilio's WhatsApp number +14155238886",
       });
       form.reset();
     } catch (error) {
@@ -86,13 +81,12 @@ export default function StartChatForm() {
           )}
         />
         <div className="text-sm text-muted-foreground mb-4">
-          <p className="font-semibold text-base mb-2">Important: WhatsApp Sandbox Setup</p>
-          <ol className="list-decimal pl-4 space-y-2">
-            <li>After submitting, you'll need to join Twilio's WhatsApp sandbox</li>
-            <li>Send <span className="font-mono bg-muted px-1 rounded">join your-sandbox-keyword</span> to <span className="font-mono bg-muted px-1 rounded">+14155238886</span></li>
-            <li>Get the exact sandbox keyword from your Twilio Console{' & '}WhatsApp Sandbox Settings</li>
-            <li>Wait for confirmation before starting your chat</li>
-            <li>For testing, only use your camera for selfies (no saved images or stickers)</li>
+          <p>Important: Before starting the chat:</p>
+          <ol className="list-decimal pl-4 mt-2">
+            <li>First, you'll receive instructions via WhatsApp to join our sandbox</li>
+            <li>Send the provided join code to Twilio's WhatsApp number (+14155238886)</li>
+            <li>Wait for confirmation from Twilio</li>
+            <li>Then your fashion consultation will begin automatically</li>
           </ol>
         </div>
         <Button type="submit">Start WhatsApp Chat</Button>

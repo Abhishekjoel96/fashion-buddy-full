@@ -1,1 +1,0 @@
-<li>Get the exact sandbox keyword from your Twilio Console &gt; WhatsApp Sandbox Settings</li>

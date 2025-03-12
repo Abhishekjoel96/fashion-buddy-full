@@ -8,6 +8,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stats endpoint for dashboard
   app.get("/api/stats", async (_req, res) => {
     try {
+      // Get all users and sessions from storage instance
       const stats = {
         activeUsers: await storage.getUserCount(),
         messagesToday: await storage.getRecentSessionCount(24),
@@ -24,7 +25,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Endpoint to start a new chat
   app.post("/api/start-chat", async (req, res) => {
     try {
-      const { phoneNumber } = req.body;
+      const { name, phoneNumber } = req.body;
 
       // Create or get user
       let user = await storage.getUser(phoneNumber);
@@ -36,14 +37,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Send welcome message
-      const welcomeMessage = `Hello! 👋 Welcome to WhatsApp Fashion Buddy! 
+      // Send welcome message with user's name
+      const welcomeMessage = `Hello ${name}! 👋 Welcome to WhatsApp Fashion Buddy! 
 I can help you find clothes that match your skin tone or try on clothes virtually. 
 What would you like to do today?
 
 1. Color Analysis & Shopping Recommendations
-2. Virtual Try-On
-3. End Chat`;
+2. Virtual Try-On`;
 
       await sendWhatsAppMessage(phoneNumber, welcomeMessage);
 
@@ -82,55 +82,31 @@ What would you like to do today?
       const twilioSignature = req.headers["x-twilio-signature"] as string;
       const url = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
 
-      // Extract webhook parameters for validation
-      const params: Record<string, string> = {};
-      Object.entries(req.body).forEach(([key, value]) => {
-        params[key] = String(value);
+      console.log("Validating Twilio request:", {
+        signature: twilioSignature,
+        url,
+        hasBody: !!req.body
       });
 
-      if (process.env.NODE_ENV !== "production" || validateTwilioRequest(url, params, twilioSignature)) {
-        const { From, Body, MediaUrl0, MediaContentType0, MessageType } = req.body;
-
-        console.log("Processing WhatsApp message:", {
-          from: From,
-          body: Body,
-          mediaUrl: MediaUrl0,
-          mediaContentType: MediaContentType0,
-          messageType: MessageType,
-          allParams: req.body
-        });
-
-        try {
-          await handleIncomingMessage(From, Body, MediaUrl0, {
-            mediaContentType: MediaContentType0,
-            messageType: MessageType,
-            requestBody: req.body
-          });
-          console.log("Successfully processed incoming message");
-        } catch (msgError) {
-          console.error("Error in handleIncomingMessage:", msgError);
-
-          // Try to send a fallback message to the user
-          try {
-            if (From) {
-              await sendWhatsAppMessage(
-                From,
-                "Sorry, we encountered an error processing your message. Please try again."
-              );
-            }
-          } catch (fallbackError) {
-            console.error("Failed to send fallback message:", fallbackError);
-          }
-        }
-
-        // Send TwiML response
-        res.set('Content-Type', 'text/xml');
-        res.send(`<?xml version="1.0" encoding="UTF-8"?><Response></Response>`);
-        console.log("Webhook response sent successfully");
-      } else {
+      if (!validateTwilioRequest(twilioSignature, url, req.body)) {
         console.error("Invalid Twilio signature");
-        res.status(401).send("Invalid signature");
+        return res.status(401).send("Invalid signature");
       }
+
+      const { From, Body, MediaUrl0 } = req.body;
+
+      console.log("Processing WhatsApp message:", {
+        from: From,
+        body: Body,
+        mediaUrl: MediaUrl0,
+        allParams: req.body
+      });
+
+      await handleIncomingMessage(From, Body, MediaUrl0);
+
+      // Send TwiML response
+      res.set('Content-Type', 'text/xml');
+      res.send(`<?xml version="1.0" encoding="UTF-8"?><Response></Response>`);
     } catch (error) {
       console.error("Webhook error:", error);
       // Still send a valid TwiML response even on error
