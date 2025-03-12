@@ -59,25 +59,29 @@ app.use((req, res, next) => {
   // Try to serve the app on port 5000
   // this serves both the API and the client
   const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  }).on('error', (error: NodeJS.ErrnoException) => {
-    if (error.code === 'EADDRINUSE') {
-      log(`Port ${port} is in use, trying port 5001...`);
-      // Try an alternative port
-      server.listen({
-        port: 5001,
-        host: "0.0.0.0",
-        reusePort: true,
-      }, () => {
-        log(`serving on port 5001`);
-      });
-    } else {
-      throw error;
-    }
-  });
+  const startServer = (portToUse: number) => {
+    server.listen({
+      port: portToUse,
+      host: "0.0.0.0",
+      reusePort: true,
+    }, () => {
+      log(`serving on port ${portToUse}`);
+    }).on('error', (error: NodeJS.ErrnoException) => {
+      if (error.code === 'EADDRINUSE') {
+        log(`Port ${portToUse} is in use, trying port 5001...`);
+        // Only try the alternative port if we're not already trying it
+        if (portToUse !== 5001) {
+          startServer(5001);
+        } else {
+          log('Both ports 5000 and 5001 are in use. Please free up one of these ports.');
+          process.exit(1);
+        }
+      } else {
+        console.error('Server error:', error);
+        throw error;
+      }
+    });
+  };
+  
+  startServer(port);
 })();
