@@ -90,7 +90,7 @@ export default function StartChatForm() {
           <ol className="list-decimal pl-4 space-y-2">
             <li>After submitting, you'll need to join Twilio's WhatsApp sandbox</li>
             <li>Send <span className="font-mono bg-muted px-1 rounded">join your-sandbox-keyword</span> to <span className="font-mono bg-muted px-1 rounded">+14155238886</span></li>
-            <li>Get the exact sandbox keyword from your Twilio Console > WhatsApp Sandbox Settings</li>
+            <li>Get the exact sandbox keyword from your Twilio Console{' & '}WhatsApp Sandbox Settings</li>
             <li>Wait for confirmation before starting your chat</li>
             <li>For testing, only use your camera for selfies (no saved images or stickers)</li>
           </ol>

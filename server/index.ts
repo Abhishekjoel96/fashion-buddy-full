@@ -2,6 +2,13 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { db, sql } from "./db";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 app.use(express.json());
@@ -51,19 +58,21 @@ app.use((req, res, next) => {
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
+      log(`Error: ${status} - ${message} - ${err.stack}`); //Improved logging
       res.status(status).json({ message });
-      console.error("Server error:", err);
     });
 
-    // Set NODE_ENV to production temporarily to bypass Vite middleware
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = "production";
+    const buildDir = path.join(__dirname, '..', 'build'); // Path to build directory
 
     try {
       if (process.env.NODE_ENV === "development") {
         await setupVite(app, server);
       } else {
-        serveStatic(app);
+        if (fs.existsSync(buildDir)) { //Check if build directory exists
+          serveStatic(app); 
+        } else {
+          log("Build directory not found. Serving static files skipped.");
+        }
       }
 
       const port = 5000;
@@ -72,8 +81,6 @@ app.use((req, res, next) => {
         host: "0.0.0.0",
       }, () => {
         log(`Server started successfully on port ${port}`);
-        // Restore original NODE_ENV
-        process.env.NODE_ENV = originalEnv;
       });
     } catch (error) {
       console.error("Failed to start server:", error);

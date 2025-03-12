@@ -81,10 +81,14 @@ What would you like to do today?
       // Validate request is from Twilio
       const twilioSignature = req.headers["x-twilio-signature"] as string;
       const url = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
-      const params = req.body as Record<string, string>;
 
-      // In development, bypass signature validation for testing
-      if (process.env.NODE_ENV !== "production" || validateTwilioRequest(twilioSignature, url, params)) {
+      // Extract webhook parameters for validation
+      const params: Record<string, string> = {};
+      Object.entries(req.body).forEach(([key, value]) => {
+        params[key] = String(value);
+      });
+
+      if (process.env.NODE_ENV !== "production" || validateTwilioRequest(url, params, twilioSignature)) {
         const { From, Body, MediaUrl0, MediaContentType0, MessageType } = req.body;
 
         console.log("Processing WhatsApp message:", {
