@@ -1,4 +1,7 @@
-import { User, InsertUser, Session, InsertSession } from "@shared/schema";
+import { User, InsertUser, Session, InsertSession, Conversation, InsertConversation } from "@shared/schema";
+import { users, sessions, conversations } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
   getUser(phoneNumber: string): Promise<User | undefined>;
@@ -10,104 +13,104 @@ export interface IStorage {
   getUserCount(): Promise<number>;
   getRecentSessionCount(hours: number): Promise<number>;
   getProductRecommendationCount(): Promise<number>;
+  // New methods for conversations
+  createConversation(conversation: InsertConversation): Promise<Conversation>;
+  getConversationHistory(userId: number, limit?: number): Promise<Conversation[]>;
 }
 
-export class MemStorage implements IStorage {
-  #users: Map<number, User>;
-  #sessions: Map<number, Session>;
-  #currentUserId: number;
-  #currentSessionId: number;
-
-  constructor() {
-    this.#users = new Map();
-    this.#sessions = new Map();
-    this.#currentUserId = 1;
-    this.#currentSessionId = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
   async getUser(phoneNumber: string): Promise<User | undefined> {
-    return Array.from(this.#users.values()).find(
-      (user) => user.phoneNumber === phoneNumber
-    );
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.phoneNumber, phoneNumber));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.#currentUserId++;
-    const user: User = {
-      id,
-      phoneNumber: insertUser.phoneNumber,
-      skinTone: insertUser.skinTone ?? null,
-      preferences: insertUser.preferences ?? null
-    };
-    this.#users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
   async updateUser(id: number, updates: Partial<User>): Promise<User> {
-    const user = this.#users.get(id);
-    if (!user) throw new Error("User not found");
-
-    const updatedUser: User = {
-      ...user,
-      ...updates,
-      skinTone: updates.skinTone ?? user.skinTone,
-      preferences: updates.preferences ?? user.preferences
-    };
-    this.#users.set(id, updatedUser);
-    return updatedUser;
+    const [user] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+    return user;
   }
 
   async getSession(userId: number): Promise<Session | undefined> {
-    return Array.from(this.#sessions.values()).find(
-      (session) => session.userId === userId
-    );
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.userId, userId))
+      .orderBy(desc(sessions.lastInteraction))
+      .limit(1);
+    return session;
   }
 
   async createSession(insertSession: InsertSession): Promise<Session> {
-    const id = this.#currentSessionId++;
-    const session: Session = {
-      id,
-      userId: insertSession.userId,
-      currentState: insertSession.currentState,
-      lastInteraction: insertSession.lastInteraction,
-      context: insertSession.context ?? null
-    };
-    this.#sessions.set(id, session);
+    const [session] = await db
+      .insert(sessions)
+      .values(insertSession)
+      .returning();
     return session;
   }
 
   async updateSession(id: number, updates: Partial<Session>): Promise<Session> {
-    const session = this.#sessions.get(id);
-    if (!session) throw new Error("Session not found");
-
-    const updatedSession: Session = {
-      ...session,
-      ...updates,
-      currentState: updates.currentState ?? session.currentState,
-      lastInteraction: updates.lastInteraction ?? session.lastInteraction,
-      context: updates.context ?? session.context
-    };
-    this.#sessions.set(id, updatedSession);
-    return updatedSession;
+    const [session] = await db
+      .update(sessions)
+      .set(updates)
+      .where(eq(sessions.id, id))
+      .returning();
+    return session;
   }
 
   async getUserCount(): Promise<number> {
-    return this.#users.size;
+    const [result] = await db
+      .select({ count: sql`count(*)::int` })
+      .from(users);
+    return result?.count ?? 0;
   }
 
   async getRecentSessionCount(hours: number): Promise<number> {
-    const now = new Date();
-    const cutoff = new Date(now.getTime() - hours * 60 * 60 * 1000);
-    return Array.from(this.#sessions.values()).filter(
-      session => session.lastInteraction > cutoff
-    ).length;
+    const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000);
+    const [result] = await db
+      .select({ count: sql`count(*)::int` })
+      .from(sessions)
+      .where(sql`last_interaction > ${cutoff}`);
+    return result?.count ?? 0;
   }
 
   async getProductRecommendationCount(): Promise<number> {
-    return Array.from(this.#sessions.values()).filter(
-      session => session.currentState === "SHOWING_PRODUCTS"
-    ).length;
+    const [result] = await db
+      .select({ count: sql`count(*)::int` })
+      .from(sessions)
+      .where(eq(sessions.currentState, 'SHOWING_PRODUCTS'));
+    return result?.count ?? 0;
+  }
+
+  async createConversation(conversation: InsertConversation): Promise<Conversation> {
+    const [result] = await db
+      .insert(conversations)
+      .values(conversation)
+      .returning();
+    return result;
+  }
+
+  async getConversationHistory(userId: number, limit: number = 50): Promise<Conversation[]> {
+    return await db
+      .select()
+      .from(conversations)
+      .where(eq(conversations.userId, userId))
+      .orderBy(desc(conversations.createdAt))
+      .limit(limit);
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
