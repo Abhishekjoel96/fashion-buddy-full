@@ -46,8 +46,7 @@ function detectImageFormat(buffer: Buffer): string {
   return 'unknown';
 }
 
-// Export the openai instance for use in other modules
-export { openai };
+// The openai instance is already exported at the top of the file
 
 // Comprehensive skin tone dataset for RAG
 const skinToneData = [
