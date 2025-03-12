@@ -1,4 +1,3 @@
-
 import twilio from "twilio";
 import fetch from "node-fetch";
 import { createHmac } from "crypto";
@@ -59,41 +58,41 @@ async function uploadBase64Image(base64Image: string): Promise<string> {
 export async function fetchTwilioMedia(mediaUrl: string): Promise<{ buffer: Buffer; contentType: string | null }> {
   try {
     console.log(`Starting to fetch media from: ${mediaUrl}`);
-    
+
     // Create proper authentication for Twilio
     const accountSid = process.env.TWILIO_ACCOUNT_SID as string;
     const authToken = process.env.TWILIO_AUTH_TOKEN as string;
-    
+
     // Base64 encode credentials for Basic Auth
     const authString = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
-    
+
     let retries = 0;
     const maxRetries = 3;
     let response;
     let error;
-    
+
     while (retries < maxRetries) {
       try {
         console.log(`Fetching attempt ${retries + 1} for: ${mediaUrl}`);
-        
+
         response = await fetch(mediaUrl, {
           headers: {
             'Authorization': `Basic ${authString}`
           },
           timeout: 30000 // 30 second timeout
         });
-        
+
         if (response.ok) {
           break; // Success, exit the retry loop
         }
-        
+
         console.warn(`Fetch attempt ${retries + 1} failed with status: ${response.status} ${response.statusText}`);
         error = new Error(`HTTP error: ${response.status} ${response.statusText}`);
       } catch (e) {
         console.warn(`Fetch attempt ${retries + 1} threw an exception:`, e);
         error = e;
       }
-      
+
       retries++;
       if (retries < maxRetries) {
         // Exponential backoff with jitter
@@ -102,25 +101,25 @@ export async function fetchTwilioMedia(mediaUrl: string): Promise<{ buffer: Buff
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
-    
+
     if (!response || !response.ok) {
       throw error || new Error(`Failed to fetch media after ${maxRetries} attempts`);
     }
-    
+
     const contentType = response.headers.get('content-type');
     console.log(`Media content type: ${contentType}`);
-    
+
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    
+
     console.log(`Media size: ${buffer.byteLength} bytes`);
-    
+
     // Check if image is too large
     if (buffer.byteLength > MAX_IMAGE_SIZE) {
       console.warn(`Image size (${buffer.byteLength} bytes) exceeds maximum size (${MAX_IMAGE_SIZE} bytes)`);
       // In a production app, you might want to resize the image here
     }
-    
+
     return { buffer, contentType };
   } catch (error) {
     console.error("Error fetching Twilio media:", error);
@@ -140,22 +139,22 @@ export function validateTwilioRequest(
     }
 
     const hmac = createHmac("sha1", process.env.TWILIO_AUTH_TOKEN);
-    
+
     // Sort the keys
     const sortedKeys = Object.keys(params).sort();
-    
+
     // Concatenate the URL and sorted key/value pairs
     let data = url;
     for (const key of sortedKeys) {
       data += key + params[key];
     }
-    
+
     // Calculate the signature
     const expectedSignature = hmac.update(data).digest("base64");
-    
+
     console.log(`Expected signature: ${expectedSignature}`);
     console.log(`Actual signature: ${twilioSignature}`);
-    
+
     // Use a constant-time comparison to prevent timing attacks
     return expectedSignature === twilioSignature;
   } catch (error) {
@@ -169,36 +168,36 @@ export function detectImageFormat(buffer: Buffer): string {
   if (buffer.length < 4) {
     return 'unknown';
   }
-  
+
   // JPEG: Starts with FFD8FF
   if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) {
     return 'jpeg';
   }
-  
+
   // PNG: Starts with 89504E47 (hex for ‰PNG)
   if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) {
     return 'png';
   }
-  
+
   // WEBP: Has "WEBP" at offset 8
   if (buffer.length >= 12 && buffer.slice(8, 12).toString() === 'WEBP') {
     return 'webp';
   }
-  
+
   // GIF: Starts with GIF87a or GIF89a
   if (buffer.length >= 6 && 
       (buffer.slice(0, 6).toString() === 'GIF87a' || 
        buffer.slice(0, 6).toString() === 'GIF89a')) {
     return 'gif';
   }
-  
+
   return 'unknown';
 }
 
 export function getBase64WithContentType(buffer: Buffer): string {
   const format = detectImageFormat(buffer);
   const base64 = buffer.toString('base64');
-  
+
   switch (format) {
     case 'jpeg':
       return `data:image/jpeg;base64,${base64}`;
