@@ -675,6 +675,7 @@ Would you like to see clothing recommendations in these colors?
     }
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`Error handling message: ${errorMessage}`, error);
     throw new Error(`Error handling message: ${errorMessage}`);
   }
 }
