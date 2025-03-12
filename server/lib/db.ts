@@ -1,6 +1,5 @@
-
-import { replicache } from 'replicache';
 import { User, Session } from '@shared/schema';
+import Database from '@replit/database';
 
 // Type for conversation history
 export interface ConversationEntry {
@@ -17,7 +16,7 @@ export interface ExtendedUser extends User {
 }
 
 // Use Replit Key-Value Store
-const db = typeof replicache !== 'undefined' ? replicache : null;
+const db = new Database();
 
 // Prefix keys for organization
 const USERS_PREFIX = 'users:';
@@ -26,7 +25,6 @@ const STATS_PREFIX = 'stats:';
 
 export async function getUser(phoneNumber: string): Promise<ExtendedUser | undefined> {
   try {
-    if (!db) return undefined;
     const key = `${USERS_PREFIX}${phoneNumber}`;
     return await db.get(key);
   } catch (error) {
@@ -37,7 +35,6 @@ export async function getUser(phoneNumber: string): Promise<ExtendedUser | undef
 
 export async function createUser(user: ExtendedUser): Promise<ExtendedUser> {
   try {
-    if (!db) throw new Error('Database not available');
     const key = `${USERS_PREFIX}${user.phoneNumber}`;
     await db.set(key, user);
     return user;
@@ -49,14 +46,13 @@ export async function createUser(user: ExtendedUser): Promise<ExtendedUser> {
 
 export async function updateUser(phoneNumber: string, updates: Partial<ExtendedUser>): Promise<ExtendedUser> {
   try {
-    if (!db) throw new Error('Database not available');
     const key = `${USERS_PREFIX}${phoneNumber}`;
     const user = await db.get(key) as ExtendedUser | undefined;
-    
+
     if (!user) {
       throw new Error('User not found');
     }
-    
+
     const updatedUser = { ...user, ...updates };
     await db.set(key, updatedUser);
     return updatedUser;
@@ -68,7 +64,6 @@ export async function updateUser(phoneNumber: string, updates: Partial<ExtendedU
 
 export async function getSession(userId: number): Promise<Session | undefined> {
   try {
-    if (!db) return undefined;
     const key = `${SESSIONS_PREFIX}${userId}`;
     return await db.get(key);
   } catch (error) {
@@ -79,7 +74,6 @@ export async function getSession(userId: number): Promise<Session | undefined> {
 
 export async function createSession(session: Session): Promise<Session> {
   try {
-    if (!db) throw new Error('Database not available');
     const key = `${SESSIONS_PREFIX}${session.userId}`;
     await db.set(key, session);
     return session;
@@ -91,14 +85,13 @@ export async function createSession(session: Session): Promise<Session> {
 
 export async function updateSession(userId: number, updates: Partial<Session>): Promise<Session> {
   try {
-    if (!db) throw new Error('Database not available');
     const key = `${SESSIONS_PREFIX}${userId}`;
     const session = await db.get(key) as Session | undefined;
-    
+
     if (!session) {
       throw new Error('Session not found');
     }
-    
+
     const updatedSession = { ...session, ...updates };
     await db.set(key, updatedSession);
     return updatedSession;
@@ -109,20 +102,19 @@ export async function updateSession(userId: number, updates: Partial<Session>): 
 }
 
 export async function addConversationEntry(
-  phoneNumber: string, 
+  phoneNumber: string,
   entry: ConversationEntry
 ): Promise<void> {
   try {
-    if (!db) throw new Error('Database not available');
     const user = await getUser(phoneNumber) as ExtendedUser | undefined;
-    
+
     if (!user) {
       throw new Error('User not found');
     }
-    
+
     const conversations = user.conversations || [];
     conversations.push(entry);
-    
+
     await updateUser(phoneNumber, { conversations });
   } catch (error) {
     console.error('Error adding conversation entry:', error);
@@ -132,7 +124,6 @@ export async function addConversationEntry(
 
 export async function getUserCount(): Promise<number> {
   try {
-    if (!db) return 0;
     const keys = await db.list(USERS_PREFIX);
     return keys.length;
   } catch (error) {
@@ -143,20 +134,19 @@ export async function getUserCount(): Promise<number> {
 
 export async function getRecentSessionCount(hours: number): Promise<number> {
   try {
-    if (!db) return 0;
     const now = new Date();
     const cutoff = new Date(now.getTime() - hours * 60 * 60 * 1000);
-    
+
     const keys = await db.list(SESSIONS_PREFIX);
     let count = 0;
-    
+
     for (const key of keys) {
       const session = await db.get(key) as Session;
       if (session && new Date(session.lastInteraction) > cutoff) {
         count++;
       }
     }
-    
+
     return count;
   } catch (error) {
     console.error('Error getting recent session count:', error);
@@ -166,17 +156,16 @@ export async function getRecentSessionCount(hours: number): Promise<number> {
 
 export async function getProductRecommendationCount(): Promise<number> {
   try {
-    if (!db) return 0;
     const keys = await db.list(SESSIONS_PREFIX);
     let count = 0;
-    
+
     for (const key of keys) {
       const session = await db.get(key) as Session;
       if (session && session.currentState === 'SHOWING_PRODUCTS') {
         count++;
       }
     }
-    
+
     return count;
   } catch (error) {
     console.error('Error getting product recommendation count:', error);
