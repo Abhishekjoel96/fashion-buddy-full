@@ -31,6 +31,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let user = await storage.getUser(phoneNumber);
       if (!user) {
         user = await storage.createUser({
+          name,
           phoneNumber,
           skinTone: null,
           preferences: null
@@ -43,16 +44,25 @@ I can help you find clothes that match your skin tone or try on clothes virtuall
 What would you like to do today?
 
 1. Color Analysis & Shopping Recommendations
-2. Virtual Try-On`;
+2. Virtual Try-On
+3. End Chat`;
 
       await sendWhatsAppMessage(phoneNumber, welcomeMessage);
 
       // Create new session
-      await storage.createSession({
+      const session = await storage.createSession({
         userId: user.id,
         currentState: "WELCOME",
         lastInteraction: new Date(),
         context: null
+      });
+
+      // Store welcome message in conversations
+      await storage.createConversation({
+        userId: user.id,
+        sessionId: session.id,
+        message: welcomeMessage,
+        messageType: 'system'
       });
 
       res.json({ success: true });
