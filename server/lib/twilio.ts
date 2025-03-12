@@ -1,3 +1,4 @@
+
 import twilio from "twilio";
 
 if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
@@ -53,7 +54,7 @@ export async function fetchTwilioMedia(mediaUrl: string): Promise<{ buffer: Buff
     }
 
     const response = await fetch(mediaUrl, options);
-
+    
     if (!response.ok) {
       throw new Error(`Failed to fetch media: ${response.status} ${response.statusText}`);
     }
