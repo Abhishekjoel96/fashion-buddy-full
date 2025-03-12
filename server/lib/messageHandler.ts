@@ -142,13 +142,6 @@ export async function handleIncomingMessage(
 
         const imageResponse = await fetch(mediaUrl);
         const imageBuffer = await imageResponse.arrayBuffer();
-        const imageType = imageResponse.headers.get('content-type');
-        const supportedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        if (!supportedTypes.includes(imageType!)) {
-          const errorMessage = "Unsupported image format. Please use JPEG, PNG, GIF, or WEBP.";
-          await sendWhatsAppMessage(phoneNumber, errorMessage);
-          return;
-        }
         const base64Image = Buffer.from(imageBuffer).toString("base64");
 
         analysis = await analyzeSkinTone(base64Image);
@@ -319,16 +312,6 @@ Would you like to see clothing recommendations in these colors?
     }
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Error in handleIncomingMessage:", error);
-    // Send a generic error message to the user.  More specific error handling could be implemented here.
-    const phoneNumber = from.replace("whatsapp:", "");
-    if (phoneNumber) {
-        try {
-          await sendWhatsAppMessage(phoneNumber, "Sorry, an error occurred. Please try again later.");
-        } catch (msgError) {
-          console.error("Failed to send error message:", msgError);
-        }
-    }
-    
+    throw new Error(`Failed to handle message: ${errorMessage}`);
   }
 }
