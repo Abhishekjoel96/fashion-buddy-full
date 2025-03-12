@@ -56,9 +56,11 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Try to serve the app on port 5000
+  // Try to serve the app on port 3000
   // this serves both the API and the client
-  const port = 5000;
+  const port = 3000;
+  const alternativePort = 3001;
+  
   const startServer = (portToUse: number) => {
     server.listen({
       port: portToUse,
@@ -68,13 +70,24 @@ app.use((req, res, next) => {
       log(`serving on port ${portToUse}`);
     }).on('error', (error: NodeJS.ErrnoException) => {
       if (error.code === 'EADDRINUSE') {
-        log(`Port ${portToUse} is in use, trying port 5001...`);
+        log(`Port ${portToUse} is in use, trying port ${alternativePort}...`);
         // Only try the alternative port if we're not already trying it
-        if (portToUse !== 5001) {
-          startServer(5001);
+        if (portToUse !== alternativePort) {
+          startServer(alternativePort);
         } else {
-          log('Both ports 5000 and 5001 are in use. Please free up one of these ports.');
-          process.exit(1);
+          log(`Both ports ${port} and ${alternativePort} are in use. Trying another port...`);
+          // Try one more port as a last resort
+          const lastResortPort = 8080;
+          server.listen({
+            port: lastResortPort,
+            host: "0.0.0.0",
+            reusePort: true,
+          }, () => {
+            log(`serving on port ${lastResortPort}`);
+          }).on('error', (err) => {
+            log('All ports are in use. Could not start server.');
+            process.exit(1);
+          });
         }
       } else {
         console.error('Server error:', error);
