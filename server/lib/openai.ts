@@ -25,8 +25,13 @@ export interface SkinToneAnalysis {
   colorsToAvoid: string[];
 }
 
-export async function analyzeSkinTone(imageBase64: string): Promise<SkinToneAnalysis> {
+export async function analyzeSkinTone(
+  imageBase64: string,
+  contentType: string
+): Promise<SkinToneAnalysis> {
   try {
+    console.log("Analyzing image with content type:", contentType);
+
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -55,7 +60,7 @@ export async function analyzeSkinTone(imageBase64: string): Promise<SkinToneAnal
             {
               type: "image_url",
               image_url: {
-                url: `data:image/jpeg;base64,${imageBase64}`
+                url: `data:${contentType};base64,${imageBase64}`
               }
             }
           ],
@@ -71,6 +76,7 @@ export async function analyzeSkinTone(imageBase64: string): Promise<SkinToneAnal
 
     return JSON.parse(content) as SkinToneAnalysis;
   } catch (error: unknown) {
+    console.error("OpenAI API error:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to analyze skin tone: ${errorMessage}`);
   }

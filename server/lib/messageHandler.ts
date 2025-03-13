@@ -2,8 +2,9 @@ import { storage } from "../storage";
 import { sendWhatsAppMessage } from "./twilio";
 import { analyzeSkinTone, type SkinToneAnalysis } from "./openai";
 import { searchProducts } from "./shopping";
+import axios from "axios";
 
-const WELCOME_MESSAGE = `👋 Hello! Welcome to WhatsApp Fashion Buddy! 
+const WELCOME_MESSAGE = `Welcome to WhatsApp Fashion Buddy! 
 I can help you find clothes that match your skin tone or try on clothes virtually. 
 What would you like to do today?
 
@@ -11,13 +12,50 @@ What would you like to do today?
 2. Virtual Try-On
 3. End Chat`;
 
+// Utility function to handle image processing
+async function processWhatsAppImage(mediaUrl: string): Promise<{ base64Data: string; contentType: string }> {
+  try {
+    // First check the content type with a HEAD request
+    const headResponse = await axios.head(mediaUrl);
+    const contentType = headResponse.headers['content-type'];
+
+    // Log image metadata for debugging
+    console.log("Image metadata:", {
+      contentType,
+      contentLength: headResponse.headers['content-length'],
+      url: mediaUrl
+    });
+
+    // Verify supported image format
+    if (!contentType.startsWith('image/')) {
+      throw new Error(`Unsupported media type: ${contentType}`);
+    }
+
+    // Fetch the actual image
+    const response = await axios.get(mediaUrl, {
+      responseType: 'arraybuffer'
+    });
+
+    // Convert to base64
+    const base64Data = Buffer.from(response.data).toString('base64');
+
+    return {
+      base64Data,
+      contentType
+    };
+  } catch (error) {
+    console.error("Error processing WhatsApp image:", error);
+    throw new Error(`Failed to process image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
 export async function handleIncomingMessage(
   from: string,
   message: string,
   mediaUrl?: string
-) {
+): Promise<void> {
   try {
-    const phoneNumber = from.replace("whatsapp:", "");
+    const phoneNumber = from.replace('whatsapp:', '');
     let user = await storage.getUser(phoneNumber);
     let analysis: SkinToneAnalysis | undefined;
 
@@ -140,18 +178,16 @@ export async function handleIncomingMessage(
           return;
         }
 
-        const imageResponse = await fetch(mediaUrl);
-        const imageBuffer = await imageResponse.arrayBuffer();
-        const base64Image = Buffer.from(imageBuffer).toString("base64");
+        try {
+          const { base64Data, contentType } = await processWhatsAppImage(mediaUrl);
+          analysis = await analyzeSkinTone(base64Data, contentType);
 
-        analysis = await analyzeSkinTone(base64Image);
+          await storage.updateUser(user.id, {
+            skinTone: analysis.tone,
+            preferences: user.preferences
+          });
 
-        await storage.updateUser(user.id, {
-          skinTone: analysis.tone,
-          preferences: user.preferences
-        });
-
-        const colorMessage = `🔍 Based on your photo, I've analyzed your skin tone:
+          const colorMessage = `🔍 Based on your photo, I've analyzed your skin tone:
 Skin Tone: ${analysis.tone}
 Undertone: ${analysis.undertone}
 
@@ -164,25 +200,41 @@ Would you like to see clothing recommendations in these colors?
 3. Budget Range ₹3000+
 4. Return to Main Menu`;
 
-        await storage.updateSession(session.id, {
-          currentState: "AWAITING_BUDGET",
-          lastInteraction: new Date(),
-          context: {
-            analyzedImage: base64Image,
-            lastMessage: colorMessage,
-            lastOptions: ["1", "2", "3", "4"]
-          }
-        });
+          await storage.updateSession(session.id, {
+            currentState: "AWAITING_BUDGET",
+            lastInteraction: new Date(),
+            context: {
+              analyzedImage: base64Data,
+              lastMessage: colorMessage,
+              lastOptions: ["1", "2", "3", "4"]
+            }
+          });
 
-        await sendWhatsAppMessage(phoneNumber, colorMessage);
+          await sendWhatsAppMessage(phoneNumber, colorMessage);
 
-        // Store system message
-        await storage.createConversation({
-          userId: user.id,
-          sessionId: session.id,
-          message: colorMessage,
-          messageType: 'system'
-        });
+          // Store system message
+          await storage.createConversation({
+            userId: user.id,
+            sessionId: session.id,
+            message: colorMessage,
+            messageType: 'system'
+          });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.error("Error processing photo:", errorMessage);
+
+          const userErrorMessage = "Sorry, I couldn't process your photo. Please make sure to send a clear, well-lit photo in JPEG or PNG format. Try taking the photo again with better lighting.";
+
+          await sendWhatsAppMessage(phoneNumber, userErrorMessage);
+
+          // Store error message in conversation
+          await storage.createConversation({
+            userId: user.id,
+            sessionId: session.id,
+            message: userErrorMessage,
+            messageType: 'system'
+          });
+        }
         break;
 
       case "AWAITING_BUDGET":
@@ -207,8 +259,8 @@ Would you like to see clothing recommendations in these colors?
         const budgetRanges = {
           "1": "500-1500",
           "2": "1500-3000",
-          "3": "3000-10000"
-        } as const;
+          "3": "3000-5000"
+        };
 
         const selectedBudget = budgetRanges[message as keyof typeof budgetRanges];
         if (!selectedBudget) {
@@ -239,15 +291,12 @@ Would you like to see clothing recommendations in these colors?
           return;
         }
 
-        const products = await searchProducts(
-          `clothing ${analysis?.recommendedColors.join(" ") || user.skinTone}`,
-          selectedBudget
-        );
+        const products = await searchProducts(`${user.skinTone} colored shirts`, selectedBudget);
+        let productMessage = "Here are some recommendations based on your skin tone:\n\n";
 
-        let productMessage = "🌟 Here are some fabulous clothing options that perfectly match your skin tone:\n\n";
         products.forEach((product, index) => {
           productMessage += `${index + 1}. ${product.title}
-   💰 ₹${product.price}
+   💰 Price: ₹${product.price}
    👕 Brand: ${product.brand}
    🔗 ${product.link}\n\n`;
         });
@@ -312,6 +361,7 @@ Would you like to see clothing recommendations in these colors?
     }
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to handle message: ${errorMessage}`);
+    console.error("Error handling message:", errorMessage);
+    throw error;
   }
 }
