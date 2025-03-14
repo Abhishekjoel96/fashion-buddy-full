@@ -53,12 +53,26 @@ async function processWhatsAppImage(mediaUrl: string): Promise<{ base64Data: str
 export async function handleIncomingMessage(
   from: string,
   message: string,
-  mediaUrl?: string
+  mediaUrl?: string,
+  messageType?: string
 ): Promise<void> {
   try {
+    // Skip processing status update messages
+    if (messageType === 'read' || messageType === 'delivered' || messageType === 'sent') {
+      console.log(`Skipping status update message: ${messageType}`);
+      return;
+    }
+
     const phoneNumber = from.replace('whatsapp:', '');
     let user = await storage.getUser(phoneNumber);
     let analysis: SkinToneAnalysis | undefined;
+
+    console.log("Processing message:", {
+      from: phoneNumber,
+      hasMedia: !!mediaUrl,
+      messageType,
+      messageContent: message
+    });
 
     // Store the incoming message
     if (user) {
