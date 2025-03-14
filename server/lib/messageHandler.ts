@@ -165,6 +165,12 @@ export async function handleIncomingMessage(
         break;
 
       case "AWAITING_PHOTO":
+        console.log("Processing photo webhook:", {
+          mediaUrl,
+          messageBody: message,
+          allParams: session.context
+        });
+        
         if (!mediaUrl) {
           console.log("No media URL received in message");
           const retryMessage = "Please send a photo for analysis.";
