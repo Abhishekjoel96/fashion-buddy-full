@@ -14,6 +14,7 @@ What would you like to do today?
 
 // Utility function to handle image processing
 async function processWhatsAppImage(mediaUrl: string): Promise<{ base64Data: string; contentType: string }> {
+  console.log("Starting image processing for URL:", mediaUrl);
   try {
     // First check the content type with a HEAD request
     const headResponse = await axios.head(mediaUrl);
@@ -165,6 +166,7 @@ export async function handleIncomingMessage(
 
       case "AWAITING_PHOTO":
         if (!mediaUrl) {
+          console.log("No media URL received in message");
           const retryMessage = "Please send a photo for analysis.";
           await sendWhatsAppMessage(phoneNumber, retryMessage);
 
