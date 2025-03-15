@@ -40,7 +40,7 @@ async function processWhatsAppImage(mediaUrl: string, userId: number): Promise<{
     }
 
     const base64Data = Buffer.from(response.data).toString('base64');
-    
+
     // Store image in database
     await storage.createUserImage({
       userId,
@@ -50,23 +50,8 @@ async function processWhatsAppImage(mediaUrl: string, userId: number): Promise<{
     });
 
     return { base64Data, contentType };
-      }
-    });
-
-    const contentType = mediaResource.contentType;
-    if (!contentType.startsWith('image/')) {
-      throw new Error('Invalid content type: ' + contentType);
-    }
-
-    const base64Data = Buffer.from(response.data).toString('base64');
-    console.log("Image processed successfully:", {
-      contentType,
-      sizeBytes: response.data.length
-    });
-
-    return { base64Data, contentType };
   } catch (error) {
-    console.error("Image processing error:", error);
+    console.error("Error processing WhatsApp image:", error);
     throw error;
   }
 }
@@ -208,7 +193,7 @@ export async function handleIncomingMessage(
 
           // Analyze with OpenAI
           analysis = await analyzeSkinTone(base64Data, contentType);
-          
+
           if (!analysis) {
             throw new Error("Failed to analyze image");
           }
