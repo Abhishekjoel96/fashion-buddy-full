@@ -4,6 +4,8 @@ import { analyzeSkinTone, type SkinToneAnalysis } from "./openai";
 import { searchProducts } from "./shopping";
 import axios from "axios";
 
+import { client as twilioClient } from './twilio';
+
 const WELCOME_MESSAGE = `Welcome to WhatsApp Fashion Buddy! 
 I can help you find clothes that match your skin tone or try on clothes virtually. 
 What would you like to do today?
@@ -16,17 +18,17 @@ What would you like to do today?
 async function processWhatsAppImage(mediaUrl: string): Promise<{ base64Data: string; contentType: string }> {
   try {
     console.log("Processing image from URL:", mediaUrl);
-    
+
     // Extract Media SID from URL
     const mediaSid = mediaUrl.split('/').pop();
     if (!mediaSid || !mediaSid.startsWith('ME')) {
       throw new Error('Invalid Twilio media SID');
     }
-    
+
     // Use Twilio client to fetch media
     const mediaResource = await twilioClient.media(mediaSid).fetch();
     console.log("Media resource:", mediaResource);
-    
+
     // Get the content with authentication
     const response = await axios.get(mediaResource.uri, {
       responseType: 'arraybuffer',
@@ -63,6 +65,13 @@ export async function handleIncomingMessage(
     const phoneNumber = from.replace('whatsapp:', '');
     let user = await storage.getUser(phoneNumber);
     let analysis: SkinToneAnalysis | undefined;
+
+    // Skip messages from Twilio's number
+    if (phoneNumber === '+14155238886') {
+      console.log("Skipping message from Twilio's number");
+      return;
+    }
+
 
     // Store the incoming message
     if (user) {

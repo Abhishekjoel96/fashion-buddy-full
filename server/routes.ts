@@ -112,7 +112,7 @@ What would you like to do today?
         allParams: req.body
       });
 
-      await handleIncomingMessage(From, Body, MediaUrl0);
+      await handleIncomingMessage(From, Body, MediaUrl0, req);
 
       // Send TwiML response
       res.set('Content-Type', 'text/xml');
