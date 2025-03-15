@@ -149,15 +149,26 @@ export async function handleIncomingMessage(
             imageType: 'selfie'
           });
 
-          // Get the content type from Cloudinary URL
-          const headResponse = await axios.head(uploadResult.imageUrl);
-          const contentType = headResponse.headers['content-type'];
+          // Extract Media SID from URL
+          const mediaSid = mediaUrl.split('/').pop();
+          if (!mediaSid || !mediaSid.startsWith('ME')) {
+            throw new Error('Invalid media SID');
+          }
 
-          // Download image from Cloudinary for analysis
-          const imageResponse = await axios.get(uploadResult.imageUrl, {
-            responseType: 'arraybuffer'
+          // Use Twilio client to fetch media content
+          const twilioMedia = await twilioClient.media(mediaSid).fetch();
+          const contentType = twilioMedia.contentType;
+
+          // Get the media content
+          const mediaContent = await twilioClient.media(mediaSid).fetch();
+          const mediaBuffer = await axios.get(mediaContent.uri, {
+            responseType: 'arraybuffer',
+            auth: {
+              username: process.env.TWILIO_ACCOUNT_SID!,
+              password: process.env.TWILIO_AUTH_TOKEN!
+            }
           });
-          const base64Data = Buffer.from(imageResponse.data).toString('base64');
+          const base64Data = Buffer.from(mediaBuffer.data).toString('base64');
 
           // Analyze skin tone using OpenAI
           analysis = await analyzeSkinTone(base64Data, contentType);
