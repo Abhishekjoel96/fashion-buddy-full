@@ -65,6 +65,13 @@ export async function handleIncomingMessage(
       return;
     }
 
+    // Skip processing status update messages or empty messages
+    if (!mediaUrl && (!message || message.trim() === "")) {
+      console.log(`Skipping status update or empty message`);
+      return;
+    }
+
+
     switch (session.currentState) {
       case "WELCOME":
         if (message === "1") {
