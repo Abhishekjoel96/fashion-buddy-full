@@ -21,6 +21,16 @@ export async function sendWhatsAppMessage(to: string, message: string): Promise<
 
     console.log(`Sending from ${fromNumber} to ${toNumber}`);
 
+    // Get sandbox information
+    const services = await client.messaging.v1.services.list();
+    const whatsappService = services.find(service => 
+      service.friendlyName?.toLowerCase().includes('whatsapp')
+    );
+
+    if (whatsappService) {
+      console.log(`WhatsApp Service Found: ${whatsappService.friendlyName}`);
+    }
+
     await client.messages.create({
       from: fromNumber,
       to: toNumber,
@@ -32,55 +42,6 @@ export async function sendWhatsAppMessage(to: string, message: string): Promise<
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(`Failed to send WhatsApp message: ${errorMessage}`);
     throw new Error(`Failed to send WhatsApp message: ${errorMessage}`);
-  }
-}
-
-export async function getMediaContent(mediaUrl: string): Promise<{
-  buffer: Buffer;
-  contentType: string;
-}> {
-  try {
-    // Extract Media SID from URL
-    const mediaSid = mediaUrl.split('/').pop()?.split('?')[0];
-    if (!mediaSid || !mediaSid.startsWith('ME')) {
-      throw new Error('Invalid media URL format');
-    }
-
-    console.log('Fetching media with SID:', mediaSid);
-
-    // Get media using Twilio client
-    const media = await client.media(mediaSid).fetch();
-    const contentType = media.contentType;
-
-    // Get the media content
-    const response = await fetch(mediaUrl, {
-      headers: {
-        Authorization: `Basic ${Buffer.from(
-          `${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`
-        ).toString('base64')}`
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch media: ${response.statusText}`);
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    console.log('Successfully fetched media:', {
-      contentType,
-      size: buffer.length,
-      mediaSid
-    });
-
-    return {
-      buffer,
-      contentType
-    };
-  } catch (error) {
-    console.error('Error fetching media:', error);
-    throw error;
   }
 }
 
