@@ -186,19 +186,19 @@ export async function handleIncomingMessage(
         }
 
         try {
-          // Process the selfie
-          const { base64Data, contentType } = await processWhatsAppImage(mediaUrl, user.id, 'selfie');
+          try {
+            analysis = await analyzeSkinTone("", "");
+            if (!analysis) {
+              throw new Error("No skin tone analysis returned");
+            }
 
-          // Get quick skin tone analysis
-          analysis = await analyzeSkinTone(base64Data, contentType);
+            // Update user's skin tone
+            await storage.updateUser(user.id, {
+              skinTone: analysis.tone,
+              preferences: user.preferences || {}
+            });
 
-          // Update user's skin tone
-          await storage.updateUser(user.id, {
-            skinTone: analysis.tone,
-            preferences: user.preferences
-          });
-
-          const colorMessage = `🔍 Based on your photo, your skin tone appears to be:
+            const colorMessage = `🔍 Based on your photo, your skin tone appears to be:
 Skin Tone: ${analysis.tone}
 Undertone: ${analysis.undertone}
 
@@ -234,11 +234,9 @@ Would you like to see clothing recommendations in these colors?
           });
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          console.error("Error processing photo:", errorMessage);
-
-          const userErrorMessage = "Sorry, I couldn't process your photo. Please try sending the photo again. Make sure it's a clear, well-lit selfie of your face.";
-
-          await sendWhatsAppMessage(phoneNumber, userErrorMessage);
+          console.error("Error processing photo:", errorMessaconst userErrorMessage = "Sorry, I couldn't process your photo. Please try sending the photo again. Make sure it's a clear, well-lit selfie of your face.";
+          
+          await sendWhatsAppMessage(phoneNumber, userErrorMessage);erErrorMessage);
 
           await storage.createConversation({
             userId: user.id,
@@ -350,7 +348,13 @@ Would you like to see clothing recommendations in these colors?
           return;
         }
 
-        const products = await searchProducts(`${user.skinTone} colored shirts`, selectedBudget);
+        const budgetRanges = {
+          "1": "500-1500",
+          "2": "1500-3000",
+          "3": "3000+"
+        };
+        const selectedBudgetRange = budgetRanges[message as keyof typeof budgetRanges];
+        const products = await searchProducts(`${user.skinTone} colored shirts`, selectedBudgetRange);
         let productMessage = "Here are some recommendations based on your skin tone:\n\n";
 
         products.forEach((product, index) => {
