@@ -186,11 +186,8 @@ export async function handleIncomingMessage(
         }
 
         try {
-          // Process the selfie
-          const { base64Data, contentType } = await processWhatsAppImage(mediaUrl, user.id, 'selfie');
-
-          // Get quick skin tone analysis
-          analysis = await analyzeSkinTone(base64Data, contentType);
+          // Get random skin tone analysis without processing image
+          analysis = await analyzeSkinTone("", "");
 
           // Update user's skin tone
           await storage.updateUser(user.id, {

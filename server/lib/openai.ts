@@ -55,9 +55,6 @@ export async function analyzeSkinTone(
   contentType: string
 ): Promise<SkinToneAnalysis> {
   try {
-    console.log("Analyzing image with content type:", contentType);
-
-    // For quick response, return a random Indian skin tone
     return getRandomSkinTone();
 
     // Keep the OpenAI code for future use if needed
