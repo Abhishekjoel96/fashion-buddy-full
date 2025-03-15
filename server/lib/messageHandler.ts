@@ -4,6 +4,8 @@ import { analyzeSkinTone, type SkinToneAnalysis } from "./openai";
 import { searchProducts } from "./shopping";
 import axios from "axios";
 
+import { client as twilioClient } from './twilio';
+
 const WELCOME_MESSAGE = `Welcome to WhatsApp Fashion Buddy! 
 I can help you find clothes that match your skin tone or try on clothes virtually. 
 What would you like to do today?
