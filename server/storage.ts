@@ -19,6 +19,7 @@ export interface IStorage {
   createUserImage(image: InsertUserImage): Promise<UserImage>;
   getUserImages(userId: number, imageType?: string): Promise<UserImage[]>;
   deleteUserImage(id: number): Promise<void>;
+  getUserImage(userId: number): Promise<UserImage | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -248,6 +249,16 @@ export class DatabaseStorage implements IStorage {
       console.log("Deleted user image:", id);
     } catch (error) {
       console.error("Error deleting user image:", error);
+      throw error;
+    }
+  }
+
+  async getUserImage(userId: number): Promise<UserImage | undefined> {
+    try {
+      const result = await db.select().from(userImages).where(eq(userImages.userId, userId)).limit(1);
+      return result[0];
+    } catch (error) {
+      console.error("Error getting user image:", error);
       throw error;
     }
   }

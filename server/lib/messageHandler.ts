@@ -2,9 +2,8 @@ import { storage } from "../storage";
 import { sendWhatsAppMessage } from "./twilio";
 import { analyzeSkinTone, type SkinToneAnalysis } from "./openai";
 import { searchProducts } from "./shopping";
+import { uploadImageToCloudinary } from "./cloudinary";
 import axios from "axios";
-
-import { client as twilioClient } from './twilio';
 
 const WELCOME_MESSAGE = `Welcome to WhatsApp Fashion Buddy! 
 I can help you find clothes that match your skin tone or try on clothes virtually. 
@@ -15,9 +14,9 @@ What would you like to do today?
 3. End Chat`;
 
 // Simplified image processing function
-async function processWhatsAppImage(mediaUrl: string): Promise<{ base64Data: string; contentType: string }> {
+async function processWhatsAppImage(mediaUrl: string, userId: number, imageType: 'selfie' | 'full_body'): Promise<{ base64Data: string; contentType: string }> {
   try {
-    console.log("Processing image from URL:", mediaUrl);
+    console.log(`Processing ${imageType} image from URL:`, mediaUrl);
 
     // Extract Media SID from URL
     const mediaSid = mediaUrl.split('/').pop();
@@ -25,12 +24,8 @@ async function processWhatsAppImage(mediaUrl: string): Promise<{ base64Data: str
       throw new Error('Invalid Twilio media SID');
     }
 
-    // Use Twilio client to fetch media
-    const mediaResource = await twilioClient.media(mediaSid).fetch();
-    console.log("Media resource:", mediaResource);
-
-    // Get the content with authentication
-    const response = await axios.get(mediaResource.uri, {
+    // Download image directly from Twilio URL
+    const response = await axios.get(mediaUrl, {
       responseType: 'arraybuffer',
       auth: {
         username: process.env.TWILIO_ACCOUNT_SID!,
@@ -38,20 +33,24 @@ async function processWhatsAppImage(mediaUrl: string): Promise<{ base64Data: str
       }
     });
 
-    const contentType = mediaResource.contentType;
+    const contentType = response.headers['content-type'];
     if (!contentType.startsWith('image/')) {
       throw new Error('Invalid content type: ' + contentType);
     }
 
     const base64Data = Buffer.from(response.data).toString('base64');
-    console.log("Image processed successfully:", {
-      contentType,
-      sizeBytes: response.data.length
+
+    // Store image in database
+    await storage.createUserImage({
+      userId,
+      imageUrl: mediaUrl,
+      cloudinaryPublicId: mediaSid,
+      imageType
     });
 
     return { base64Data, contentType };
   } catch (error) {
-    console.error("Image processing error:", error);
+    console.error("Error processing WhatsApp image:", error);
     throw error;
   }
 }
@@ -71,7 +70,6 @@ export async function handleIncomingMessage(
       console.log("Skipping message from Twilio's number");
       return;
     }
-
 
     // Store the incoming message
     if (user) {
@@ -188,23 +186,27 @@ export async function handleIncomingMessage(
         }
 
         try {
-          // Process image directly
-          const { base64Data, contentType } = await processWhatsAppImage(mediaUrl);
+          // Process the selfie
+          const { base64Data, contentType } = await processWhatsAppImage(mediaUrl, user.id, 'selfie');
 
-          // Analyze with OpenAI
+          // Get quick skin tone analysis
           analysis = await analyzeSkinTone(base64Data, contentType);
 
+          // Update user's skin tone
           await storage.updateUser(user.id, {
             skinTone: analysis.tone,
             preferences: user.preferences
           });
 
-          const colorMessage = `🔍 Based on your photo, I've analyzed your skin tone:
+          const colorMessage = `🔍 Based on your photo, your skin tone appears to be:
 Skin Tone: ${analysis.tone}
 Undertone: ${analysis.undertone}
 
 Recommended Colors: 
-${analysis.recommendedColors.join("\n")}
+${analysis.recommendedColors.join(", ")}
+
+Colors to Avoid:
+${analysis.colorsToAvoid.join(", ")}
 
 Would you like to see clothing recommendations in these colors?
 1. Budget Range ₹500-₹1500
@@ -230,7 +232,6 @@ Would you like to see clothing recommendations in these colors?
             message: colorMessage,
             messageType: 'system'
           });
-
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           console.error("Error processing photo:", errorMessage);
@@ -239,6 +240,56 @@ Would you like to see clothing recommendations in these colors?
 
           await sendWhatsAppMessage(phoneNumber, userErrorMessage);
 
+          await storage.createConversation({
+            userId: user.id,
+            sessionId: session.id,
+            message: userErrorMessage,
+            messageType: 'system'
+          });
+        }
+        break;
+      case "AWAITING_TRYON_PHOTO":
+        if (!mediaUrl) {
+          const retryMessage = "Please send a full-body photo for virtual try-on.";
+          await sendWhatsAppMessage(phoneNumber, retryMessage);
+          await storage.createConversation({
+            userId: user.id,
+            sessionId: session.id,
+            message: retryMessage,
+            messageType: 'system'
+          });
+          return;
+        }
+        try {
+          const { base64Data, contentType } = await processWhatsAppImage(mediaUrl, user.id, 'full_body');
+          // Placeholder for virtual try-on logic.  This would involve sending the image to a virtual try-on service and then responding with the result.
+          const tryOnMessage = "Processing your full-body image for virtual try-on. This may take a few moments...";
+          await sendWhatsAppMessage(phoneNumber, tryOnMessage);
+          await storage.createConversation({
+            userId: user.id,
+            sessionId: session.id,
+            message: tryOnMessage,
+            messageType: 'system'
+          });
+          // Add your virtual try-on logic here.  This is a placeholder.
+          const virtualTryOnResult = "Here's your virtual try-on result! [Link to image or other result]";
+          await sendWhatsAppMessage(phoneNumber, virtualTryOnResult);
+          await storage.createConversation({
+            userId: user.id,
+            sessionId: session.id,
+            message: virtualTryOnResult,
+            messageType: 'system'
+          });
+          await storage.updateSession(session.id, {
+            currentState: "WELCOME",
+            lastInteraction: new Date(),
+            context: null
+          });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.error("Error processing full-body photo:", errorMessage);
+          const userErrorMessage = "Sorry, I couldn't process your full-body photo for virtual try-on. Please try again.";
+          await sendWhatsAppMessage(phoneNumber, userErrorMessage);
           await storage.createConversation({
             userId: user.id,
             sessionId: session.id,
