@@ -2,6 +2,7 @@ import { User, InsertUser, Session, InsertSession, Conversation, InsertConversat
 import { users, sessions, conversations } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
+import { userImages, type UserImage, type InsertUserImage } from "@shared/schema";
 
 export interface IStorage {
   getUser(phoneNumber: string): Promise<User | undefined>;
@@ -15,6 +16,9 @@ export interface IStorage {
   getProductRecommendationCount(): Promise<number>;
   createConversation(conversation: InsertConversation): Promise<Conversation>;
   getConversationHistory(userId: number, limit?: number): Promise<Conversation[]>;
+  createUserImage(image: InsertUserImage): Promise<UserImage>;
+  getUserImages(userId: number, imageType?: string): Promise<UserImage[]>;
+  deleteUserImage(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -195,6 +199,55 @@ export class DatabaseStorage implements IStorage {
       return history;
     } catch (error) {
       console.error("Error getting conversation history:", error);
+      throw error;
+    }
+  }
+
+  async createUserImage(image: InsertUserImage): Promise<UserImage> {
+    try {
+      console.log("Creating user image:", image);
+      const [result] = await db
+        .insert(userImages)
+        .values(image)
+        .returning();
+      console.log("Created user image:", result);
+      return result;
+    } catch (error) {
+      console.error("Error creating user image:", error);
+      throw error;
+    }
+  }
+
+  async getUserImages(userId: number, imageType?: string): Promise<UserImage[]> {
+    try {
+      console.log("Getting user images for user:", userId, "type:", imageType);
+      let query = db
+        .select()
+        .from(userImages)
+        .where(eq(userImages.userId, userId));
+
+      if (imageType) {
+        query = query.where(eq(userImages.imageType, imageType));
+      }
+
+      const images = await query.orderBy(desc(userImages.createdAt));
+      console.log("Retrieved user images count:", images.length);
+      return images;
+    } catch (error) {
+      console.error("Error getting user images:", error);
+      throw error;
+    }
+  }
+
+  async deleteUserImage(id: number): Promise<void> {
+    try {
+      console.log("Deleting user image:", id);
+      await db
+        .delete(userImages)
+        .where(eq(userImages.id, id));
+      console.log("Deleted user image:", id);
+    } catch (error) {
+      console.error("Error deleting user image:", error);
       throw error;
     }
   }

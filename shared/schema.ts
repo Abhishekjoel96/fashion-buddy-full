@@ -15,6 +15,15 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const userImages = pgTable("user_images", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  imageUrl: text("image_url").notNull(),
+  cloudinaryPublicId: text("cloudinary_public_id").notNull(),
+  imageType: text("image_type").notNull(), // 'selfie' or 'full_body'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const sessions = pgTable("sessions", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
@@ -45,11 +54,20 @@ export const insertUserSchema = createInsertSchema(users).pick({
   preferences: true,
 });
 
+export const insertUserImageSchema = createInsertSchema(userImages).pick({
+  userId: true,
+  imageUrl: true,
+  cloudinaryPublicId: true,
+  imageType: true,
+});
+
 export const insertSessionSchema = createInsertSchema(sessions);
 export const insertConversationSchema = createInsertSchema(conversations);
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UserImage = typeof userImages.$inferSelect;
+export type InsertUserImage = z.infer<typeof insertUserImageSchema>;
 export type Session = typeof sessions.$inferSelect;
 export type InsertSession = z.infer<typeof insertSessionSchema>;
 export type Conversation = typeof conversations.$inferSelect;
