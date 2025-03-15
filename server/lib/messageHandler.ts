@@ -2,6 +2,7 @@ import { storage } from "../storage";
 import { sendWhatsAppMessage } from "./twilio";
 import { analyzeSkinTone, type SkinToneAnalysis } from "./openai";
 import { searchProducts } from "./shopping";
+import { uploadImageToCloudinary } from "./cloudinary";
 import axios from "axios";
 
 const WELCOME_MESSAGE = `Welcome to WhatsApp Fashion Buddy! 
@@ -11,43 +12,6 @@ What would you like to do today?
 1. Color Analysis & Shopping Recommendations
 2. Virtual Try-On
 3. End Chat`;
-
-// Utility function to handle image processing
-async function processWhatsAppImage(mediaUrl: string): Promise<{ base64Data: string; contentType: string }> {
-  try {
-    // First check the content type with a HEAD request
-    const headResponse = await axios.head(mediaUrl);
-    const contentType = headResponse.headers['content-type'];
-
-    // Log image metadata for debugging
-    console.log("Image metadata:", {
-      contentType,
-      contentLength: headResponse.headers['content-length'],
-      url: mediaUrl
-    });
-
-    // Verify supported image format
-    if (!contentType.startsWith('image/')) {
-      throw new Error(`Unsupported media type: ${contentType}`);
-    }
-
-    // Fetch the actual image
-    const response = await axios.get(mediaUrl, {
-      responseType: 'arraybuffer'
-    });
-
-    // Convert to base64
-    const base64Data = Buffer.from(response.data).toString('base64');
-
-    return {
-      base64Data,
-      contentType
-    };
-  } catch (error) {
-    console.error("Error processing WhatsApp image:", error);
-    throw new Error(`Failed to process image: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
-}
 
 export async function handleIncomingMessage(
   from: string,
@@ -92,7 +56,6 @@ export async function handleIncomingMessage(
       });
       await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
 
-      // Store system message
       await storage.createConversation({
         userId: user.id,
         sessionId: session.id,
@@ -117,7 +80,6 @@ export async function handleIncomingMessage(
           });
           await sendWhatsAppMessage(phoneNumber, nextMessage);
 
-          // Store system message
           await storage.createConversation({
             userId: user.id,
             sessionId: session.id,
@@ -137,7 +99,6 @@ export async function handleIncomingMessage(
           });
           await sendWhatsAppMessage(phoneNumber, nextMessage);
 
-          // Store system message
           await storage.createConversation({
             userId: user.id,
             sessionId: session.id,
@@ -153,7 +114,6 @@ export async function handleIncomingMessage(
           });
           await sendWhatsAppMessage(phoneNumber, thankYouMessage);
 
-          // Store system message
           await storage.createConversation({
             userId: user.id,
             sessionId: session.id,
@@ -168,7 +128,6 @@ export async function handleIncomingMessage(
           const retryMessage = "Please send a photo for analysis.";
           await sendWhatsAppMessage(phoneNumber, retryMessage);
 
-          // Store system message
           await storage.createConversation({
             userId: user.id,
             sessionId: session.id,
@@ -179,7 +138,28 @@ export async function handleIncomingMessage(
         }
 
         try {
-          const { base64Data, contentType } = await processWhatsAppImage(mediaUrl);
+          // Upload image to Cloudinary
+          const uploadResult = await uploadImageToCloudinary(mediaUrl, user.id, 'selfie');
+
+          // Store image information in database
+          const userImage = await storage.createUserImage({
+            userId: user.id,
+            imageUrl: uploadResult.imageUrl,
+            cloudinaryPublicId: uploadResult.publicId,
+            imageType: 'selfie'
+          });
+
+          // Get the content type from Cloudinary URL
+          const headResponse = await axios.head(uploadResult.imageUrl);
+          const contentType = headResponse.headers['content-type'];
+
+          // Download image from Cloudinary for analysis
+          const imageResponse = await axios.get(uploadResult.imageUrl, {
+            responseType: 'arraybuffer'
+          });
+          const base64Data = Buffer.from(imageResponse.data).toString('base64');
+
+          // Analyze skin tone using OpenAI
           analysis = await analyzeSkinTone(base64Data, contentType);
 
           await storage.updateUser(user.id, {
@@ -204,7 +184,7 @@ Would you like to see clothing recommendations in these colors?
             currentState: "AWAITING_BUDGET",
             lastInteraction: new Date(),
             context: {
-              analyzedImage: base64Data,
+              analyzedImage: uploadResult.imageUrl,
               lastMessage: colorMessage,
               lastOptions: ["1", "2", "3", "4"]
             }
@@ -212,22 +192,21 @@ Would you like to see clothing recommendations in these colors?
 
           await sendWhatsAppMessage(phoneNumber, colorMessage);
 
-          // Store system message
           await storage.createConversation({
             userId: user.id,
             sessionId: session.id,
             message: colorMessage,
             messageType: 'system'
           });
+
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           console.error("Error processing photo:", errorMessage);
 
-          const userErrorMessage = "Sorry, I couldn't process your photo. Please make sure to send a clear, well-lit photo in JPEG or PNG format. Try taking the photo again with better lighting.";
+          const userErrorMessage = "Sorry, I couldn't process your photo. Please make sure to send a clear, well-lit photo and try again. If the problem persists, try taking the photo with better lighting or a different angle.";
 
           await sendWhatsAppMessage(phoneNumber, userErrorMessage);
 
-          // Store error message in conversation
           await storage.createConversation({
             userId: user.id,
             sessionId: session.id,
@@ -246,7 +225,6 @@ Would you like to see clothing recommendations in these colors?
           });
           await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
 
-          // Store system message
           await storage.createConversation({
             userId: user.id,
             sessionId: session.id,
@@ -267,7 +245,6 @@ Would you like to see clothing recommendations in these colors?
           const invalidMessage = "Please select a valid budget range (1-3) or 4 to return to main menu";
           await sendWhatsAppMessage(phoneNumber, invalidMessage);
 
-          // Store system message
           await storage.createConversation({
             userId: user.id,
             sessionId: session.id,
@@ -281,7 +258,6 @@ Would you like to see clothing recommendations in these colors?
           const errorMessage = "Sorry, we need to analyze your skin tone first. Please send a photo.";
           await sendWhatsAppMessage(phoneNumber, errorMessage);
 
-          // Store system message
           await storage.createConversation({
             userId: user.id,
             sessionId: session.id,
@@ -315,7 +291,6 @@ Would you like to see clothing recommendations in these colors?
 
         await sendWhatsAppMessage(phoneNumber, productMessage);
 
-        // Store system message
         await storage.createConversation({
           userId: user.id,
           sessionId: session.id,
@@ -333,7 +308,6 @@ Would you like to see clothing recommendations in these colors?
           });
           await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
 
-          // Store system message
           await storage.createConversation({
             userId: user.id,
             sessionId: session.id,
@@ -351,7 +325,6 @@ Would you like to see clothing recommendations in these colors?
         });
         await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
 
-        // Store system message
         await storage.createConversation({
           userId: user.id,
           sessionId: session.id,
