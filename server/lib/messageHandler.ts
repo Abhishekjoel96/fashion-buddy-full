@@ -15,32 +15,42 @@ What would you like to do today?
 // Simplified image processing function
 async function processWhatsAppImage(mediaUrl: string): Promise<{ base64Data: string; contentType: string }> {
   try {
-    console.log("Fetching image from:", mediaUrl);
-
-    // Get the image content
-    const response = await axios.get(mediaUrl, {
+    console.log("Processing image from URL:", mediaUrl);
+    
+    // Extract Media SID from URL
+    const mediaSid = mediaUrl.split('/').pop();
+    if (!mediaSid || !mediaSid.startsWith('ME')) {
+      throw new Error('Invalid Twilio media SID');
+    }
+    
+    // Use Twilio client to fetch media
+    const mediaResource = await twilioClient.media(mediaSid).fetch();
+    console.log("Media resource:", mediaResource);
+    
+    // Get the content with authentication
+    const response = await axios.get(mediaResource.uri, {
       responseType: 'arraybuffer',
-      headers: {
-        // Twilio might need these headers
-        'Accept': 'image/*'
+      auth: {
+        username: process.env.TWILIO_ACCOUNT_SID!,
+        password: process.env.TWILIO_AUTH_TOKEN!
       }
     });
 
-    // Get content type from response
-    const contentType = response.headers['content-type'] || 'image/jpeg';
-    console.log("Image content type:", contentType);
+    const contentType = mediaResource.contentType;
+    if (!contentType.startsWith('image/')) {
+      throw new Error('Invalid content type: ' + contentType);
+    }
 
-    // Convert to base64
     const base64Data = Buffer.from(response.data).toString('base64');
-    console.log("Successfully converted image to base64");
+    console.log("Image processed successfully:", {
+      contentType,
+      sizeBytes: response.data.length
+    });
 
-    return {
-      base64Data,
-      contentType
-    };
+    return { base64Data, contentType };
   } catch (error) {
-    console.error("Error processing WhatsApp image:", error);
-    throw new Error(`Failed to process image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.error("Image processing error:", error);
+    throw error;
   }
 }
 

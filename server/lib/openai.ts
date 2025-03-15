@@ -54,7 +54,15 @@ export async function analyzeSkinTone(
       throw new Error("No content in OpenAI response");
     }
 
-    return JSON.parse(content) as SkinToneAnalysis;
+    const analysis = JSON.parse(content);
+    
+    // Validate response structure
+    if (!analysis.tone || !analysis.undertone || !Array.isArray(analysis.recommendedColors)) {
+      console.error("Invalid analysis structure:", analysis);
+      throw new Error("Invalid analysis format from OpenAI");
+    }
+
+    return analysis as SkinToneAnalysis;
   } catch (error: unknown) {
     console.error("OpenAI API error:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
