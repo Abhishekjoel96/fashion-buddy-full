@@ -15,7 +15,7 @@ What would you like to do today?
 3. End Chat`;
 
 // Simplified image processing function
-async function processWhatsAppImage(mediaUrl: string): Promise<{ base64Data: string; contentType: string }> {
+async function processWhatsAppImage(mediaUrl: string, userId: number): Promise<{ base64Data: string; contentType: string }> {
   try {
     console.log("Processing image from URL:", mediaUrl);
 
@@ -25,13 +25,29 @@ async function processWhatsAppImage(mediaUrl: string): Promise<{ base64Data: str
       throw new Error('Invalid Twilio media SID');
     }
 
-    // Use Twilio client to fetch media
-    const mediaResource = await twilioClient.media(mediaSid).fetch();
-    console.log("Media resource:", mediaResource);
-
-    // Get the content with authentication
-    const response = await axios.get(mediaResource.uri, {
+    // Download image directly from Twilio URL
+    const response = await axios.get(mediaUrl, {
       responseType: 'arraybuffer',
+      auth: {
+        username: process.env.TWILIO_ACCOUNT_SID!,
+        password: process.env.TWILIO_AUTH_TOKEN!
+      }
+    });
+
+    const contentType = response.headers['content-type'];
+    if (!contentType.startsWith('image/')) {
+      throw new Error('Invalid content type: ' + contentType);
+    }
+
+    const base64Data = Buffer.from(response.data).toString('base64');
+    
+    // Store image in database
+    await storage.createUserImage({
+      userId,
+      imageUrl: mediaUrl,
+      cloudinaryPublicId: mediaSid,
+      imageType: 'selfie'
+    });
       auth: {
         username: process.env.TWILIO_ACCOUNT_SID!,
         password: process.env.TWILIO_AUTH_TOKEN!
@@ -188,11 +204,15 @@ export async function handleIncomingMessage(
         }
 
         try {
-          // Process image directly
-          const { base64Data, contentType } = await processWhatsAppImage(mediaUrl);
+          // Process and store image
+          const { base64Data, contentType } = await processWhatsAppImage(mediaUrl, user.id);
 
           // Analyze with OpenAI
           analysis = await analyzeSkinTone(base64Data, contentType);
+          
+          if (!analysis) {
+            throw new Error("Failed to analyze image");
+          }
 
           await storage.updateUser(user.id, {
             skinTone: analysis.tone,
