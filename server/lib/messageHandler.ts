@@ -48,9 +48,8 @@ async function processWhatsAppImage(mediaUrl: string, userId: number): Promise<{
       cloudinaryPublicId: mediaSid,
       imageType: 'selfie'
     });
-      auth: {
-        username: process.env.TWILIO_ACCOUNT_SID!,
-        password: process.env.TWILIO_AUTH_TOKEN!
+
+    return { base64Data, contentType };
       }
     });
 
