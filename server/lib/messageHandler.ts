@@ -186,13 +186,17 @@ export async function handleIncomingMessage(
         }
 
         try {
-          // Get random skin tone analysis without processing image
-          analysis = await analyzeSkinTone("", "");
+          try {
+            analysis = await analyzeSkinTone("", "");
+            if (!analysis) {
+              throw new Error("No skin tone analysis returned");
+            }
 
           // Update user's skin tone
           await storage.updateUser(user.id, {
             skinTone: analysis.tone,
-            preferences: user.preferences
+            preferences: user.preferences || {}
+          });
           });
 
           const colorMessage = `🔍 Based on your photo, your skin tone appears to be:
@@ -347,7 +351,13 @@ Would you like to see clothing recommendations in these colors?
           return;
         }
 
-        const products = await searchProducts(`${user.skinTone} colored shirts`, selectedBudget);
+        const budgetRanges = {
+          "1": "500-1500",
+          "2": "1500-3000",
+          "3": "3000+"
+        };
+        const selectedBudgetRange = budgetRanges[message as keyof typeof budgetRanges];
+        const products = await searchProducts(`${user.skinTone} colored shirts`, selectedBudgetRange);
         let productMessage = "Here are some recommendations based on your skin tone:\n\n";
 
         products.forEach((product, index) => {
