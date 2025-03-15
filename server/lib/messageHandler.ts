@@ -234,11 +234,9 @@ Would you like to see clothing recommendations in these colors?
           });
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          console.error("Error processing photo:", errorMessage);
-
-          const userErrorMessage = "Sorry, I couldn't process your photo. Please try sending the photo again. Make sure it's a clear, well-lit selfie of your face.";
-
-          await sendWhatsAppMessage(phoneNumber, userErrorMessage);
+          console.error("Error processing photo:", errorMessaconst userErrorMessage = "Sorry, I couldn't process your photo. Please try sending the photo again. Make sure it's a clear, well-lit selfie of your face.";
+          
+          await sendWhatsAppMessage(phoneNumber, userErrorMessage);erErrorMessage);
 
           await storage.createConversation({
             userId: user.id,
