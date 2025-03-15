@@ -192,14 +192,13 @@ export async function handleIncomingMessage(
               throw new Error("No skin tone analysis returned");
             }
 
-          // Update user's skin tone
-          await storage.updateUser(user.id, {
-            skinTone: analysis.tone,
-            preferences: user.preferences || {}
-          });
-          });
+            // Update user's skin tone
+            await storage.updateUser(user.id, {
+              skinTone: analysis.tone,
+              preferences: user.preferences || {}
+            });
 
-          const colorMessage = `🔍 Based on your photo, your skin tone appears to be:
+            const colorMessage = `🔍 Based on your photo, your skin tone appears to be:
 Skin Tone: ${analysis.tone}
 Undertone: ${analysis.undertone}
 
