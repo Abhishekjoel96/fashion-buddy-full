@@ -2,7 +2,6 @@ import { storage } from "../storage";
 import { sendWhatsAppMessage } from "./twilio";
 import { analyzeSkinTone, type SkinToneAnalysis } from "./openai";
 import { searchProducts } from "./shopping";
-import { uploadImageToCloudinary } from "./cloudinary";
 import axios from "axios";
 
 const WELCOME_MESSAGE = `Welcome to WhatsApp Fashion Buddy! 
@@ -12,6 +11,38 @@ What would you like to do today?
 1. Color Analysis & Shopping Recommendations
 2. Virtual Try-On
 3. End Chat`;
+
+// Simplified image processing function
+async function processWhatsAppImage(mediaUrl: string): Promise<{ base64Data: string; contentType: string }> {
+  try {
+    console.log("Fetching image from:", mediaUrl);
+
+    // Get the image content
+    const response = await axios.get(mediaUrl, {
+      responseType: 'arraybuffer',
+      headers: {
+        // Twilio might need these headers
+        'Accept': 'image/*'
+      }
+    });
+
+    // Get content type from response
+    const contentType = response.headers['content-type'] || 'image/jpeg';
+    console.log("Image content type:", contentType);
+
+    // Convert to base64
+    const base64Data = Buffer.from(response.data).toString('base64');
+    console.log("Successfully converted image to base64");
+
+    return {
+      base64Data,
+      contentType
+    };
+  } catch (error) {
+    console.error("Error processing WhatsApp image:", error);
+    throw new Error(`Failed to process image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
 
 export async function handleIncomingMessage(
   from: string,
@@ -64,13 +95,6 @@ export async function handleIncomingMessage(
       });
       return;
     }
-
-    // Skip processing status update messages or empty messages
-    if (!mediaUrl && (!message || message.trim() === "")) {
-      console.log(`Skipping status update or empty message`);
-      return;
-    }
-
 
     switch (session.currentState) {
       case "WELCOME":
@@ -145,39 +169,10 @@ export async function handleIncomingMessage(
         }
 
         try {
-          // Upload image to Cloudinary
-          const uploadResult = await uploadImageToCloudinary(mediaUrl, user.id, 'selfie');
+          // Process image directly
+          const { base64Data, contentType } = await processWhatsAppImage(mediaUrl);
 
-          // Store image information in database
-          const userImage = await storage.createUserImage({
-            userId: user.id,
-            imageUrl: uploadResult.imageUrl,
-            cloudinaryPublicId: uploadResult.publicId,
-            imageType: 'selfie'
-          });
-
-          // Extract Media SID from URL
-          const mediaSid = mediaUrl.split('/').pop();
-          if (!mediaSid || !mediaSid.startsWith('ME')) {
-            throw new Error('Invalid media SID');
-          }
-
-          // Use Twilio client to fetch media content
-          const twilioMedia = await twilioClient.media(mediaSid).fetch();
-          const contentType = twilioMedia.contentType;
-
-          // Get the media content
-          const mediaContent = await twilioClient.media(mediaSid).fetch();
-          const mediaBuffer = await axios.get(mediaContent.uri, {
-            responseType: 'arraybuffer',
-            auth: {
-              username: process.env.TWILIO_ACCOUNT_SID!,
-              password: process.env.TWILIO_AUTH_TOKEN!
-            }
-          });
-          const base64Data = Buffer.from(mediaBuffer.data).toString('base64');
-
-          // Analyze skin tone using OpenAI
+          // Analyze with OpenAI
           analysis = await analyzeSkinTone(base64Data, contentType);
 
           await storage.updateUser(user.id, {
@@ -202,7 +197,7 @@ Would you like to see clothing recommendations in these colors?
             currentState: "AWAITING_BUDGET",
             lastInteraction: new Date(),
             context: {
-              analyzedImage: uploadResult.imageUrl,
+              analyzedImage: mediaUrl,
               lastMessage: colorMessage,
               lastOptions: ["1", "2", "3", "4"]
             }
@@ -221,7 +216,7 @@ Would you like to see clothing recommendations in these colors?
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           console.error("Error processing photo:", errorMessage);
 
-          const userErrorMessage = "Sorry, I couldn't process your photo. Please make sure to send a clear, well-lit photo and try again. If the problem persists, try taking the photo with better lighting or a different angle.";
+          const userErrorMessage = "Sorry, I couldn't process your photo. Please try sending the photo again. Make sure it's a clear, well-lit selfie of your face.";
 
           await sendWhatsAppMessage(phoneNumber, userErrorMessage);
 
