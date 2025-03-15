@@ -253,12 +253,14 @@ Would you like to see clothing recommendations in these colors?
         }
 
         const products = await searchProducts(`${user.skinTone} colored shirts`, selectedBudget);
-        let productMessage = "Here are some recommendations based on your skin tone:\n\n";
+        let productMessage = "🛍️ Here are some recommendations based on your skin tone:\n\n";
 
         products.forEach((product, index) => {
           productMessage += `${index + 1}. ${product.title}
    💰 Price: ₹${product.price}
    👕 Brand: ${product.brand}
+   🏪 From: ${product.source}
+   ${product.description ? `📝 ${product.description}\n` : ''}
    🔗 ${product.link}\n\n`;
         });
 
