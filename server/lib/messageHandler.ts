@@ -253,24 +253,19 @@ Would you like to see clothing recommendations in these colors?
         }
 
         const products = await searchProducts(`${user.skinTone} colored shirts`, selectedBudget);
-        const chunks: string[] = [];
+        const productChunks: string[] = [];
         let currentChunk = "🛍️ Here are some recommendations based on your skin tone:\n\n";
 
-        products.slice(0, 5).forEach((product, index) => {
-          const productText = `${index + 1}. ${product.title}
-   💰 Price: ₹${product.price}
-   👕 Brand: ${product.brand}
-   🏪 From: ${product.source}
-   ${product.description ? `📝 ${product.description}\n` : ''}
-   🔗 ${product.link}\n\n`;
-
+        for (const [index, product] of products.slice(0, 5).entries()) {
+          const productText = `${index + 1}. ${product.title}\n💰 Price: ₹${product.price}\n👕 Brand: ${product.brand}\n🏪 From: ${product.source}\n🔗 ${product.link}\n\n`;
+          
           if ((currentChunk + productText).length > 1500) {
-            chunks.push(currentChunk);
-            currentChunk = productText;
+            productChunks.push(currentChunk.trim());
+            currentChunk = `Continued...\n\n${productText}`;
           } else {
             currentChunk += productText;
           }
-        });
+        }
 
         const finalMessage = "What would you like to do next?\n1. Try these on virtually\n2. See more options\n3. Return to Main Menu";
         
