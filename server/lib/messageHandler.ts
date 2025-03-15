@@ -1,8 +1,8 @@
 import { storage } from "../storage";
-import { sendWhatsAppMessage } from "./twilio";
+import { sendWhatsAppMessage, getMediaContent } from "./twilio";
 import { analyzeSkinTone, type SkinToneAnalysis } from "./openai";
 import { searchProducts } from "./shopping";
-import axios from "axios";
+import { virtualTryOn } from "./fashion";
 
 const WELCOME_MESSAGE = `Welcome to WhatsApp Fashion Buddy! 
 I can help you find clothes that match your skin tone or try on clothes virtually. 
@@ -11,44 +11,6 @@ What would you like to do today?
 1. Color Analysis & Shopping Recommendations
 2. Virtual Try-On
 3. End Chat`;
-
-// Utility function to handle image processing
-async function processWhatsAppImage(mediaUrl: string): Promise<{ base64Data: string; contentType: string }> {
-  console.log("Starting image processing for URL:", mediaUrl);
-  try {
-    // First check the content type with a HEAD request
-    const headResponse = await axios.head(mediaUrl);
-    const contentType = headResponse.headers['content-type'];
-
-    // Log image metadata for debugging
-    console.log("Image metadata:", {
-      contentType,
-      contentLength: headResponse.headers['content-length'],
-      url: mediaUrl
-    });
-
-    // Verify supported image format
-    if (!contentType.startsWith('image/')) {
-      throw new Error(`Unsupported media type: ${contentType}`);
-    }
-
-    // Fetch the actual image
-    const response = await axios.get(mediaUrl, {
-      responseType: 'arraybuffer'
-    });
-
-    // Convert to base64
-    const base64Data = Buffer.from(response.data).toString('base64');
-
-    return {
-      base64Data,
-      contentType
-    };
-  } catch (error) {
-    console.error("Error processing WhatsApp image:", error);
-    throw new Error(`Failed to process image: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
-}
 
 export async function handleIncomingMessage(
   from: string,
@@ -107,7 +69,6 @@ export async function handleIncomingMessage(
       });
       await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
 
-      // Store system message
       await storage.createConversation({
         userId: user.id,
         sessionId: session.id,
@@ -132,7 +93,6 @@ export async function handleIncomingMessage(
           });
           await sendWhatsAppMessage(phoneNumber, nextMessage);
 
-          // Store system message
           await storage.createConversation({
             userId: user.id,
             sessionId: session.id,
@@ -152,7 +112,6 @@ export async function handleIncomingMessage(
           });
           await sendWhatsAppMessage(phoneNumber, nextMessage);
 
-          // Store system message
           await storage.createConversation({
             userId: user.id,
             sessionId: session.id,
@@ -168,7 +127,6 @@ export async function handleIncomingMessage(
           });
           await sendWhatsAppMessage(phoneNumber, thankYouMessage);
 
-          // Store system message
           await storage.createConversation({
             userId: user.id,
             sessionId: session.id,
@@ -179,18 +137,11 @@ export async function handleIncomingMessage(
         break;
 
       case "AWAITING_PHOTO":
-        console.log("Processing photo webhook:", {
-          mediaUrl,
-          messageBody: message,
-          allParams: session.context
-        });
-        
+      case "AWAITING_TRYON_PHOTO":
         if (!mediaUrl) {
-          console.log("No media URL received in message");
-          const retryMessage = "Please send a photo for analysis.";
+          const retryMessage = "Please send a photo.";
           await sendWhatsAppMessage(phoneNumber, retryMessage);
 
-          // Store system message
           await storage.createConversation({
             userId: user.id,
             sessionId: session.id,
@@ -201,15 +152,19 @@ export async function handleIncomingMessage(
         }
 
         try {
-          const { base64Data, contentType } = await processWhatsAppImage(mediaUrl);
-          analysis = await analyzeSkinTone(base64Data, contentType);
+          const { buffer, contentType } = await getMediaContent(mediaUrl);
+          const base64Data = buffer.toString('base64');
 
-          await storage.updateUser(user.id, {
-            skinTone: analysis.tone,
-            preferences: user.preferences
-          });
+          if (session.currentState === "AWAITING_PHOTO") {
+            // Handle skin tone analysis
+            analysis = await analyzeSkinTone(base64Data, contentType);
 
-          const colorMessage = `🔍 Based on your photo, I've analyzed your skin tone:
+            await storage.updateUser(user.id, {
+              skinTone: analysis.tone,
+              preferences: user.preferences
+            });
+
+            const colorMessage = `🔍 Based on your photo, I've analyzed your skin tone:
 Skin Tone: ${analysis.tone}
 Undertone: ${analysis.undertone}
 
@@ -222,40 +177,125 @@ Would you like to see clothing recommendations in these colors?
 3. Budget Range ₹3000+
 4. Return to Main Menu`;
 
-          await storage.updateSession(session.id, {
-            currentState: "AWAITING_BUDGET",
-            lastInteraction: new Date(),
-            context: {
-              analyzedImage: base64Data,
-              lastMessage: colorMessage,
-              lastOptions: ["1", "2", "3", "4"]
-            }
-          });
+            await storage.updateSession(session.id, {
+              currentState: "AWAITING_BUDGET",
+              lastInteraction: new Date(),
+              context: {
+                analyzedImage: base64Data,
+                lastMessage: colorMessage,
+                lastOptions: ["1", "2", "3", "4"]
+              }
+            });
 
-          await sendWhatsAppMessage(phoneNumber, colorMessage);
+            await sendWhatsAppMessage(phoneNumber, colorMessage);
 
-          // Store system message
-          await storage.createConversation({
-            userId: user.id,
-            sessionId: session.id,
-            message: colorMessage,
-            messageType: 'system'
-          });
+            await storage.createConversation({
+              userId: user.id,
+              sessionId: session.id,
+              message: colorMessage,
+              messageType: 'system'
+            });
+          } else {
+            // Handle virtual try-on
+            await storage.updateSession(session.id, {
+              currentState: "AWAITING_CLOTHING_CHOICE",
+              lastInteraction: new Date(),
+              context: {
+                virtualTryOnImage: base64Data,
+                lastMessage: "Great! Now, please tell me what type of shirt you'd like to try on (e.g., 'blue t-shirt', 'white formal shirt', etc.)",
+                lastOptions: []
+              }
+            });
+
+            await sendWhatsAppMessage(phoneNumber, "Great! Now, please tell me what type of shirt you'd like to try on (e.g., 'blue t-shirt', 'white formal shirt', etc.)");
+
+            await storage.createConversation({
+              userId: user.id,
+              sessionId: session.id,
+              message: "Great! Now, please tell me what type of shirt you'd like to try on (e.g., 'blue t-shirt', 'white formal shirt', etc.)",
+              messageType: 'system'
+            });
+          }
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           console.error("Error processing photo:", errorMessage);
 
-          const userErrorMessage = "Sorry, I couldn't process your photo. Please make sure to send a clear, well-lit photo in JPEG or PNG format. Try taking the photo again with better lighting.";
+          const userErrorMessage = "Sorry, I couldn't process your photo. Please make sure to send a clear photo. Try taking the photo again with better lighting.";
 
           await sendWhatsAppMessage(phoneNumber, userErrorMessage);
 
-          // Store error message in conversation
           await storage.createConversation({
             userId: user.id,
             sessionId: session.id,
             message: userErrorMessage,
             messageType: 'system'
           });
+        }
+        break;
+
+      case "AWAITING_CLOTHING_CHOICE":
+        try {
+          const virtualTryOnImage = session.context?.virtualTryOnImage;
+          if (!virtualTryOnImage) {
+            throw new Error("Missing virtual try-on image");
+          }
+
+          // Process virtual try-on
+          const processedImage = await virtualTryOn(virtualTryOnImage, message);
+
+          await sendWhatsAppMessage(phoneNumber, "Here's how you would look in that shirt! What would you like to do next?\n\n1. Try another shirt\n2. Return to Main Menu");
+
+          await storage.updateSession(session.id, {
+            currentState: "SHOWING_TRYON_RESULT",
+            lastInteraction: new Date(),
+            context: {
+              virtualTryOnImage,
+              lastMessage: "What would you like to do next?",
+              lastOptions: ["1", "2"]
+            }
+          });
+
+          await storage.createConversation({
+            userId: user.id,
+            sessionId: session.id,
+            message: "Virtual try-on completed",
+            messageType: 'system',
+            mediaUrl: processedImage
+          });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.error("Virtual try-on error:", errorMessage);
+
+          await sendWhatsAppMessage(phoneNumber, "Sorry, I couldn't process the virtual try-on. Would you like to:\n1. Try again\n2. Return to Main Menu");
+
+          await storage.createConversation({
+            userId: user.id,
+            sessionId: session.id,
+            message: "Virtual try-on failed",
+            messageType: 'system'
+          });
+        }
+        break;
+
+      case "SHOWING_TRYON_RESULT":
+        if (message === "1") {
+          await storage.updateSession(session.id, {
+            currentState: "AWAITING_CLOTHING_CHOICE",
+            lastInteraction: new Date(),
+            context: {
+              virtualTryOnImage: session.context?.virtualTryOnImage,
+              lastMessage: "What type of shirt would you like to try on?",
+              lastOptions: []
+            }
+          });
+          await sendWhatsAppMessage(phoneNumber, "What type of shirt would you like to try on?");
+        } else if (message === "2") {
+          await storage.updateSession(session.id, {
+            currentState: "WELCOME",
+            lastInteraction: new Date(),
+            context: null
+          });
+          await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
         }
         break;
 
@@ -268,7 +308,6 @@ Would you like to see clothing recommendations in these colors?
           });
           await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
 
-          // Store system message
           await storage.createConversation({
             userId: user.id,
             sessionId: session.id,
@@ -289,7 +328,6 @@ Would you like to see clothing recommendations in these colors?
           const invalidMessage = "Please select a valid budget range (1-3) or 4 to return to main menu";
           await sendWhatsAppMessage(phoneNumber, invalidMessage);
 
-          // Store system message
           await storage.createConversation({
             userId: user.id,
             sessionId: session.id,
@@ -303,7 +341,6 @@ Would you like to see clothing recommendations in these colors?
           const errorMessage = "Sorry, we need to analyze your skin tone first. Please send a photo.";
           await sendWhatsAppMessage(phoneNumber, errorMessage);
 
-          // Store system message
           await storage.createConversation({
             userId: user.id,
             sessionId: session.id,
@@ -337,7 +374,6 @@ Would you like to see clothing recommendations in these colors?
 
         await sendWhatsAppMessage(phoneNumber, productMessage);
 
-        // Store system message
         await storage.createConversation({
           userId: user.id,
           sessionId: session.id,
@@ -355,7 +391,6 @@ Would you like to see clothing recommendations in these colors?
           });
           await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
 
-          // Store system message
           await storage.createConversation({
             userId: user.id,
             sessionId: session.id,
@@ -373,7 +408,6 @@ Would you like to see clothing recommendations in these colors?
         });
         await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
 
-        // Store system message
         await storage.createConversation({
           userId: user.id,
           sessionId: session.id,
