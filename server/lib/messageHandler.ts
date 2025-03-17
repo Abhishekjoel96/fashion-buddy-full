@@ -253,30 +253,44 @@ Would you like to see clothing recommendations in these colors?
         }
 
         const products = await searchProducts(`${user.skinTone} colored shirts`, selectedBudget);
-        let productMessage = "🛍️ Here are some recommendations based on your skin tone:\n\n";
+        const productChunks: string[] = [];
+        let currentChunk = "🛍️ Here are some recommendations based on your skin tone:\n\n";
 
-        products.forEach((product, index) => {
-          productMessage += `${index + 1}. ${product.title}
-   💰 Price: ₹${product.price}
-   👕 Brand: ${product.brand}
-   🏪 From: ${product.source}
-   ${product.description ? `📝 ${product.description}\n` : ''}
-   🔗 ${product.link}\n\n`;
-        });
+        for (const [index, product] of products.slice(0, 5).entries()) {
+          const productText = `${index + 1}. ${product.title}\n💰 Price: ₹${product.price}\n👕 Brand: ${product.brand}\n🏪 From: ${product.source}\n🔗 ${product.link}\n\n`;
+          
+          if ((currentChunk + productText).length > 1500) {
+            productChunks.push(currentChunk.trim());
+            currentChunk = `Continued...\n\n${productText}`;
+          } else {
+            currentChunk += productText;
+          }
+        }
 
-        productMessage += "What would you like to do next?\n1. Try these on virtually\n2. See more options\n3. Return to Main Menu";
+        const finalMessage = "What would you like to do next?\n1. Try these on virtually\n2. See more options\n3. Return to Main Menu";
+        
+        if ((currentChunk + finalMessage).length > 1500) {
+          chunks.push(currentChunk);
+          chunks.push(finalMessage);
+        } else {
+          currentChunk += finalMessage;
+          chunks.push(currentChunk);
+        }
+
+        // Send messages in sequence
+        for (const chunk of chunks) {
+          await sendWhatsAppMessage(phoneNumber, chunk);
+        }
 
         await storage.updateSession(session.id, {
           currentState: "SHOWING_PRODUCTS",
           lastInteraction: new Date(),
           context: {
-            lastMessage: productMessage,
+            lastMessage: chunks.join('\n'),
             lastOptions: ["1", "2", "3"],
             analyzedImage: session.context?.analyzedImage
           }
         });
-
-        await sendWhatsAppMessage(phoneNumber, productMessage);
 
         await storage.createConversation({
           userId: user.id,
