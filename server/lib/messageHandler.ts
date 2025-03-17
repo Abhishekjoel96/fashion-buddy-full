@@ -59,29 +59,47 @@ export async function handleIncomingMessage(
         context: null
       });
       await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
-
-      await storage.createConversation({
-        userId: user.id,
-        sessionId: session.id,
-        message: WELCOME_MESSAGE,
-        messageType: 'system'
-      });
       return;
     }
 
     switch (session.currentState) {
       case "WELCOME":
         if (message === "1") {
-          const nextMessage = "Great! Let's analyze your skin tone to give you personalized color recommendations!";
+          const nextMessage = "Please send me a clear, well-lit selfie photo so I can analyze your skin tone and recommend suitable colors.";
           await storage.updateSession(session.id, {
-            currentState: "AWAITING_COLOR_ANALYSIS",
+            currentState: "AWAITING_PHOTO",
             lastInteraction: new Date(),
             context: null
           });
           await sendWhatsAppMessage(phoneNumber, nextMessage);
+        } else if (message === "2") {
+          const nextMessage = "For virtual try-on, I'll need two pictures:\n1. A full-body photo of yourself\n2. The garment/shirt you want to try on\n\nPlease send your full-body photo first.";
+          await storage.updateSession(session.id, {
+            currentState: "AWAITING_FULLBODY",
+            lastInteraction: new Date(),
+            context: null
+          });
+          await sendWhatsAppMessage(phoneNumber, nextMessage);
+        } else if (message === "3") {
+          const thankYouMessage = "Thank you for using WhatsApp Fashion Buddy! Have a great day! 👋";
+          await storage.updateSession(session.id, {
+            currentState: "ENDED",
+            lastInteraction: new Date(),
+            context: null
+          });
+          await sendWhatsAppMessage(phoneNumber, thankYouMessage);
+        }
+        break;
 
-          // Get random skin tone analysis directly
-          analysis = await analyzeSkinTone("", "");
+      case "AWAITING_PHOTO":
+        if (!mediaUrl) {
+          await sendWhatsAppMessage(phoneNumber, "Please send a selfie photo for skin tone analysis.");
+          return;
+        }
+
+        try {
+          // Now we analyze the photo after receiving it
+          analysis = await analyzeSkinTone("", mediaUrl); // Use mediaUrl here
 
           // Update user's skin tone
           await storage.updateUser(user.id, {
@@ -89,7 +107,7 @@ export async function handleIncomingMessage(
             preferences: user.preferences || {}
           });
 
-          const colorMessage = `🔍 Based on my analysis, your skin tone appears to be:
+          const colorMessage = `🔍 Based on my analysis of your photo, your skin tone appears to be:
 Skin Tone: ${analysis.tone}
 Undertone: ${analysis.undertone}
 
@@ -109,47 +127,17 @@ Would you like to see clothing recommendations in these colors?
             currentState: "AWAITING_BUDGET",
             lastInteraction: new Date(),
             context: {
+              recommendedColors: analysis.recommendedColors,
               lastMessage: colorMessage,
               lastOptions: ["1", "2", "3", "4"]
             }
           });
 
           await sendWhatsAppMessage(phoneNumber, colorMessage);
-          await storage.createConversation({
-            userId: user.id,
-            sessionId: session.id,
-            message: colorMessage,
-            messageType: 'system'
-          });
-
-        } else if (message === "2") {
-          const nextMessage = "For virtual try-on, I'll need two pictures:\n1. A full-body photo of yourself\n2. The garment/shirt you want to try on\n\nPlease send your full-body photo first.";
-          await storage.updateSession(session.id, {
-            currentState: "AWAITING_FULLBODY",
-            lastInteraction: new Date(),
-            context: null
-          });
-          await sendWhatsAppMessage(phoneNumber, nextMessage);
-          await storage.createConversation({
-            userId: user.id,
-            sessionId: session.id,
-            message: nextMessage,
-            messageType: 'system'
-          });
-        } else if (message === "3") {
-          const thankYouMessage = "Thank you for using WhatsApp Fashion Buddy! Have a great day! 👋";
-          await storage.updateSession(session.id, {
-            currentState: "ENDED",
-            lastInteraction: new Date(),
-            context: null
-          });
-          await sendWhatsAppMessage(phoneNumber, thankYouMessage);
-          await storage.createConversation({
-            userId: user.id,
-            sessionId: session.id,
-            message: thankYouMessage,
-            messageType: 'system'
-          });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.error("Error analyzing photo:", errorMessage);
+          await sendWhatsAppMessage(phoneNumber, "Sorry, I couldn't analyze your photo. Please try sending another clear, well-lit selfie photo.");
         }
         break;
 
@@ -172,56 +160,127 @@ Would you like to see clothing recommendations in these colors?
 
         const selectedBudget = budgetRanges[message as keyof typeof budgetRanges];
         if (!selectedBudget) {
-          const invalidMessage = "Please select a valid budget range (1-3) or 4 to return to main menu";
-          await sendWhatsAppMessage(phoneNumber, invalidMessage);
+          await sendWhatsAppMessage(phoneNumber, "Please select a valid budget range (1-3) or 4 to return to main menu");
           return;
         }
 
-        const products = await searchProducts(`${user.skinTone} colored shirts`, selectedBudget);
-        const productChunks: string[] = [];
-        let currentChunk = "🛍️ Here are some recommendations based on your skin tone:\n\n";
+        if (!user.skinTone || !session.context?.recommendedColors) {
+          await sendWhatsAppMessage(phoneNumber, "Sorry, we need to analyze your skin tone first. Please send a photo.");
+          return;
+        }
 
-        for (const [index, product] of products.entries()) {
-          const productText = `${index + 1}. ${product.title}\n💰 Price: ₹${product.price}\n👕 Brand: ${product.brand}\n🏪 From: ${product.source}\n${product.description ? `📝 ${product.description}\n` : ''}🔗 ${product.link}\n\n`;
+        try {
+          // Search products using the exact recommended colors
+          const recommendedColors = session.context.recommendedColors;
+          let allProducts: any[] = [];
 
-          if ((currentChunk + productText).length > 1500) {
+          // Search for each recommended color
+          for (const color of recommendedColors) {
+            const products = await searchProducts(color, selectedBudget);
+            allProducts = [...allProducts, ...products];
+          }
+
+          // Remove duplicates and take top 5
+          const uniqueProducts = Array.from(new Set(allProducts.map(p => p.link)))
+            .map(link => allProducts.find(p => p.link === link))
+            .slice(0, 5);
+
+          const productChunks: string[] = [];
+          let currentChunk = `🛍️ Here are some recommendations in your recommended colors:\n\n`;
+
+          for (const [index, product] of uniqueProducts.entries()) {
+            const productText = `${index + 1}. ${product.title}\n💰 Price: ₹${product.price}\n👕 Brand: ${product.brand}\n🏪 From: ${product.source}\n${product.description ? `📝 ${product.description}\n` : ''}🔗 ${product.link}\n\n`;
+
+            if ((currentChunk + productText).length > 1500) {
+              productChunks.push(currentChunk.trim());
+              currentChunk = `Continued...\n\n${productText}`;
+            } else {
+              currentChunk += productText;
+            }
+          }
+
+          const finalMessage = "\nWhat would you like to do next?\n1. Try these on virtually\n2. See more options\n3. Return to Main Menu";
+
+          if ((currentChunk + finalMessage).length > 1500) {
             productChunks.push(currentChunk.trim());
-            currentChunk = `Continued...\n\n${productText}`;
+            productChunks.push(finalMessage);
           } else {
-            currentChunk += productText;
+            currentChunk += finalMessage;
+            productChunks.push(currentChunk);
           }
-        }
 
-        const finalMessage = "\nWhat would you like to do next?\n1. Try these on virtually\n2. See more options\n3. Return to Main Menu";
-
-        if ((currentChunk + finalMessage).length > 1500) {
-          productChunks.push(currentChunk.trim());
-          productChunks.push(finalMessage);
-        } else {
-          currentChunk += finalMessage;
-          productChunks.push(currentChunk);
-        }
-
-        // Send messages in sequence
-        for (const chunk of productChunks) {
-          await sendWhatsAppMessage(phoneNumber, chunk);
-        }
-
-        await storage.updateSession(session.id, {
-          currentState: "SHOWING_PRODUCTS",
-          lastInteraction: new Date(),
-          context: {
-            lastMessage: productChunks.join('\n'),
-            lastOptions: ["1", "2", "3"]
+          // Send messages in sequence
+          for (const chunk of productChunks) {
+            await sendWhatsAppMessage(phoneNumber, chunk);
           }
-        });
 
-        await storage.createConversation({
-          userId: user.id,
-          sessionId: session.id,
-          message: productChunks.join('\n'),
-          messageType: 'system'
-        });
+          await storage.updateSession(session.id, {
+            currentState: "SHOWING_PRODUCTS",
+            lastInteraction: new Date(),
+            context: {
+              recommendedColors,
+              currentPage: 1,
+              budget: selectedBudget,
+              lastOptions: ["1", "2", "3"]
+            }
+          });
+        } catch (error) {
+          console.error("Error fetching products:", error);
+          await sendWhatsAppMessage(phoneNumber, "Sorry, I couldn't fetch product recommendations at the moment. Please try again.");
+        }
+        break;
+
+      case "SHOWING_PRODUCTS":
+        if (message === "1") {
+          // Transition to virtual try-on
+          const tryOnMessage = "Please send me a full-body photo to start the virtual try-on process.";
+          await storage.updateSession(session.id, {
+            currentState: "AWAITING_FULLBODY",
+            lastInteraction: new Date(),
+            context: null
+          });
+          await sendWhatsAppMessage(phoneNumber, tryOnMessage);
+        } else if (message === "2") {
+          // Show more options
+          const context = session.context;
+          if (!context?.recommendedColors || !context.budget) {
+            await sendWhatsAppMessage(phoneNumber, "Sorry, I couldn't load more options. Please start over.");
+            return;
+          }
+
+          // Fetch next page of products
+          const nextPage = (context.currentPage || 1) + 1;
+          const products = await searchProducts(context.recommendedColors[0], context.budget);
+
+          if (products.length === 0) {
+            await sendWhatsAppMessage(phoneNumber, "No more products available in this category.");
+            return;
+          }
+
+          // Format and send products
+          let productMessage = "Here are more recommendations:\n\n";
+          products.forEach((product, index) => {
+            productMessage += `${index + 1}. ${product.title}\n💰 Price: ₹${product.price}\n👕 Brand: ${product.brand}\n🔗 ${product.link}\n\n`;
+          });
+
+          productMessage += "\n1. Try these on virtually\n2. See more options\n3. Return to Main Menu";
+
+          await sendWhatsAppMessage(phoneNumber, productMessage);
+          await storage.updateSession(session.id, {
+            ...session,
+            context: {
+              ...context,
+              currentPage: nextPage
+            }
+          });
+        } else if (message === "3") {
+          await storage.updateSession(session.id, {
+            currentState: "WELCOME",
+            lastInteraction: new Date(),
+            context: null
+          });
+          await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
+        }
         break;
 
       case "AWAITING_FULLBODY":
@@ -230,24 +289,29 @@ Would you like to see clothing recommendations in these colors?
           return;
         }
 
-        // Store full-body image
-        await storage.createUserImage({
-          userId: user.id,
-          imageUrl: mediaUrl,
-          cloudinaryPublicId: 'fullbody_' + Date.now(),
-          imageType: 'full_body'
-        });
+        try {
+          // Store full-body image
+          await storage.createUserImage({
+            userId: user.id,
+            imageUrl: mediaUrl,
+            cloudinaryPublicId: 'fullbody_' + Date.now(),
+            imageType: 'full_body'
+          });
 
-        const garmentMessage = "Great! Now please send the photo of the garment you'd like to try on.";
-        await storage.updateSession(session.id, {
-          currentState: "AWAITING_GARMENT",
-          lastInteraction: new Date(),
-          context: {
-            fullBodyImage: mediaUrl
-          }
-        });
+          const garmentMessage = "Great! I've received your full-body photo. Now please send the photo of the garment you'd like to try on.";
+          await storage.updateSession(session.id, {
+            currentState: "AWAITING_GARMENT",
+            lastInteraction: new Date(),
+            context: {
+              fullBodyImage: mediaUrl
+            }
+          });
 
-        await sendWhatsAppMessage(phoneNumber, garmentMessage);
+          await sendWhatsAppMessage(phoneNumber, garmentMessage);
+        } catch (error) {
+          console.error("Error processing full-body photo:", error);
+          await sendWhatsAppMessage(phoneNumber, "Sorry, I couldn't process your full-body photo. Please try sending it again.");
+        }
         break;
 
       case "AWAITING_GARMENT":
@@ -256,31 +320,35 @@ Would you like to see clothing recommendations in these colors?
           return;
         }
 
-        // Store garment image
-        await storage.createUserImage({
-          userId: user.id,
-          imageUrl: mediaUrl,
-          cloudinaryPublicId: 'garment_' + Date.now(),
-          imageType: 'garment'
-        });
+        try {
+          // Store garment image
+          await storage.createUserImage({
+            userId: user.id,
+            imageUrl: mediaUrl,
+            cloudinaryPublicId: 'garment_' + Date.now(),
+            imageType: 'garment'
+          });
 
-        const processingMessage = "Thank you! I'm processing your virtual try-on request. This may take a moment...";
-        await sendWhatsAppMessage(phoneNumber, processingMessage);
+          await sendWhatsAppMessage(phoneNumber, "Processing your virtual try-on request. This may take a moment...");
 
-        // Here you would integrate with the Fashion API
-        // For now, we'll send a placeholder response
-        const tryOnResponse = "Here's how the garment would look on you! [Virtual try-on image would be here]\n\nWould you like to:\n1. Try another garment\n2. Return to main menu";
+          // Here you would integrate with your Fashion API
+          // For now, sending a placeholder response
+          const tryOnResponse = "Here's how the garment would look on you! [Virtual try-on image]\n\nWould you like to:\n1. Try another garment\n2. Return to main menu";
 
-        await storage.updateSession(session.id, {
-          currentState: "SHOWING_TRYON",
-          lastInteraction: new Date(),
-          context: {
-            fullBodyImage: session.context?.fullBodyImage,
-            garmentImage: mediaUrl
-          }
-        });
+          await storage.updateSession(session.id, {
+            currentState: "SHOWING_TRYON",
+            lastInteraction: new Date(),
+            context: {
+              fullBodyImage: session.context?.fullBodyImage,
+              garmentImage: mediaUrl
+            }
+          });
 
-        await sendWhatsAppMessage(phoneNumber, tryOnResponse);
+          await sendWhatsAppMessage(phoneNumber, tryOnResponse);
+        } catch (error) {
+          console.error("Error processing garment photo:", error);
+          await sendWhatsAppMessage(phoneNumber, "Sorry, I couldn't process the garment photo. Please try sending it again.");
+        }
         break;
 
       case "SHOWING_TRYON":
@@ -303,16 +371,7 @@ Would you like to see clothing recommendations in these colors?
           await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
         }
         break;
-      case "SHOWING_PRODUCTS":
-        if (message === "3") {
-          await storage.updateSession(session.id, {
-            currentState: "WELCOME",
-            lastInteraction: new Date(),
-            context: null
-          });
-          await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
-        }
-        break;
+
       default:
         await storage.updateSession(session.id, {
           currentState: "WELCOME",
