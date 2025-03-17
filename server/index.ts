@@ -57,7 +57,7 @@ app.use((req, res, next) => {
   }
 
   // Use a dynamically assigned port to avoid conflicts
-  const port = process.env.PORT || 3001;
+  const port = process.env.PORT || 4000;
   server.listen({
     port,
     host: "0.0.0.0",
