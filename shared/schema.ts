@@ -20,7 +20,7 @@ export const userImages = pgTable("user_images", {
   userId: integer("user_id").notNull(),
   imageUrl: text("image_url").notNull(),
   cloudinaryPublicId: text("cloudinary_public_id").notNull(),
-  imageType: text("image_type").notNull(), // 'selfie' or 'full_body'
+  imageType: text("image_type").notNull(), // 'selfie' or 'full_body' or 'garment'
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -33,7 +33,8 @@ export const sessions = pgTable("sessions", {
     lastMessage?: string;
     lastOptions?: string[];
     analyzedImage?: string;
-    virtualTryOnImage?: string;
+    fullBodyImage?: string;
+    garmentImage?: string;
   }>(),
 });
 
