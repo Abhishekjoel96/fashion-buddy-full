@@ -2,6 +2,7 @@ import { storage } from "../storage";
 import { sendWhatsAppMessage } from "./twilio";
 import { analyzeSkinTone, type SkinToneAnalysis } from "./openai";
 import { searchProducts } from "./shopping";
+import { virtualTryOn } from "./fashionApi"; // Assuming this function exists
 
 const WELCOME_MESSAGE = `Welcome to WhatsApp Fashion Buddy! 
 I can help you find clothes that match your skin tone or try on clothes virtually. 
@@ -170,25 +171,21 @@ Would you like to see clothing recommendations in these colors?
         }
 
         try {
-          // Search products using the exact recommended colors
-          const recommendedColors = session.context.recommendedColors;
+          // Get first three recommended colors
+          const recommendedColors = session.context.recommendedColors.slice(0, 3);
           let allProducts: any[] = [];
 
           // Search for each recommended color
           for (const color of recommendedColors) {
             const products = await searchProducts(color, selectedBudget);
-            allProducts = [...allProducts, ...products];
+            // Take top 2 products from each color
+            allProducts = [...allProducts, ...products.slice(0, 2)];
           }
-
-          // Remove duplicates and take top 5
-          const uniqueProducts = Array.from(new Set(allProducts.map(p => p.link)))
-            .map(link => allProducts.find(p => p.link === link))
-            .slice(0, 5);
 
           const productChunks: string[] = [];
           let currentChunk = `🛍️ Here are some recommendations in your recommended colors:\n\n`;
 
-          for (const [index, product] of uniqueProducts.entries()) {
+          for (const [index, product] of allProducts.entries()) {
             const productText = `${index + 1}. ${product.title}\n💰 Price: ₹${product.price}\n👕 Brand: ${product.brand}\n🏪 From: ${product.source}\n${product.description ? `📝 ${product.description}\n` : ''}🔗 ${product.link}\n\n`;
 
             if ((currentChunk + productText).length > 1500) {
@@ -321,7 +318,7 @@ Would you like to see clothing recommendations in these colors?
         }
 
         try {
-          // Store garment image
+          // Store garment image without processing
           await storage.createUserImage({
             userId: user.id,
             imageUrl: mediaUrl,
@@ -331,23 +328,35 @@ Would you like to see clothing recommendations in these colors?
 
           await sendWhatsAppMessage(phoneNumber, "Processing your virtual try-on request. This may take a moment...");
 
-          // Here you would integrate with your Fashion API
-          // For now, sending a placeholder response
-          const tryOnResponse = "Here's how the garment would look on you! [Virtual try-on image]\n\nWould you like to:\n1. Try another garment\n2. Return to main menu";
+          // Get full body image URL from context
+          const fullBodyImage = session.context?.fullBodyImage;
+          if (!fullBodyImage) {
+            throw new Error("Full body image not found");
+          }
 
-          await storage.updateSession(session.id, {
-            currentState: "SHOWING_TRYON",
-            lastInteraction: new Date(),
-            context: {
-              fullBodyImage: session.context?.fullBodyImage,
-              garmentImage: mediaUrl
-            }
-          });
+          // Send to Fashion API
+          const tryOnResult = await virtualTryOn(fullBodyImage, mediaUrl);
 
-          await sendWhatsAppMessage(phoneNumber, tryOnResponse);
+          if (tryOnResult.success) {
+            const tryOnResponse = `Here's how the garment would look on you!\n${tryOnResult.resultImageUrl}\n\nWould you like to:\n1. Try another garment\n2. Return to main menu`;
+
+            await storage.updateSession(session.id, {
+              currentState: "SHOWING_TRYON",
+              lastInteraction: new Date(),
+              context: {
+                fullBodyImage,
+                garmentImage: mediaUrl,
+                resultImage: tryOnResult.resultImageUrl
+              }
+            });
+
+            await sendWhatsAppMessage(phoneNumber, tryOnResponse);
+          } else {
+            throw new Error(tryOnResult.error || "Virtual try-on failed");
+          }
         } catch (error) {
-          console.error("Error processing garment photo:", error);
-          await sendWhatsAppMessage(phoneNumber, "Sorry, I couldn't process the garment photo. Please try sending it again.");
+          console.error("Error processing virtual try-on:", error);
+          await sendWhatsAppMessage(phoneNumber, "Sorry, I couldn't process the virtual try-on. Please try again with different images.");
         }
         break;
 
