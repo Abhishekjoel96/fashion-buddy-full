@@ -2,7 +2,8 @@ import { storage } from "../storage";
 import { sendWhatsAppMessage } from "./twilio";
 import { analyzeSkinTone, type SkinToneAnalysis } from "./openai";
 import { searchProducts } from "./shopping";
-import { virtualTryOn } from "./fashionApi"; // Assuming this function exists
+import { virtualTryOn } from "./fashionApi";
+import { uploadImageToCloudinary } from "./cloudinary";
 
 const WELCOME_MESSAGE = `Welcome to WhatsApp Fashion Buddy! 
 I can help you find clothes that match your skin tone or try on clothes virtually. 
@@ -287,36 +288,23 @@ Would you like to see clothing recommendations in these colors?
         }
 
         try {
-          const maxRetries = 3;
-          let lastError;
-          
-          for (let i = 0; i < maxRetries; i++) {
-            try {
-              // Store full-body image
-              await storage.createUserImage({
-                userId: user.id,
-                imageUrl: mediaUrl,
-                cloudinaryPublicId: 'fullbody_' + Date.now(),
-                imageType: 'full_body'
-              });
-              break; // Success, exit retry loop
-            } catch (err) {
-              lastError = err;
-              if (i < maxRetries - 1) {
-                console.log(`Retry ${i + 1} failed, attempting again...`);
-                await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
-                continue;
-              }
-              throw lastError;
-            }
-          }
+          // Upload full-body image to Cloudinary first
+          const uploadResult = await uploadImageToCloudinary(mediaUrl, user.id, 'full_body');
+
+          // Store image info in database
+          await storage.createUserImage({
+            userId: user.id,
+            imageUrl: uploadResult.imageUrl,
+            cloudinaryPublicId: uploadResult.publicId,
+            imageType: 'full_body'
+          });
 
           const garmentMessage = "Great! I've received your full-body photo. Now please send the photo of the garment you'd like to try on.";
           await storage.updateSession(session.id, {
             currentState: "AWAITING_GARMENT",
             lastInteraction: new Date(),
             context: {
-              fullBodyImage: mediaUrl
+              fullBodyImage: uploadResult.imageUrl // Store Cloudinary URL instead of Twilio URL
             }
           });
 
@@ -334,11 +322,14 @@ Would you like to see clothing recommendations in these colors?
         }
 
         try {
-          // Store garment image without processing
+          // Upload garment image to Cloudinary
+          const uploadResult = await uploadImageToCloudinary(mediaUrl, user.id, 'garment');
+
+          // Store garment image in database
           await storage.createUserImage({
             userId: user.id,
-            imageUrl: mediaUrl,
-            cloudinaryPublicId: 'garment_' + Date.now(),
+            imageUrl: uploadResult.imageUrl,
+            cloudinaryPublicId: uploadResult.publicId,
             imageType: 'garment'
           });
 
@@ -350,8 +341,8 @@ Would you like to see clothing recommendations in these colors?
             throw new Error("Full body image not found");
           }
 
-          // Send to Fashion API
-          const tryOnResult = await virtualTryOn(fullBodyImage, mediaUrl);
+          // Send Cloudinary URLs to Fashion API
+          const tryOnResult = await virtualTryOn(fullBodyImage, uploadResult.imageUrl);
 
           if (tryOnResult.success) {
             const tryOnResponse = `Here's how the garment would look on you!\n${tryOnResult.resultImageUrl}\n\nWould you like to:\n1. Try another garment\n2. Return to main menu`;
@@ -361,7 +352,7 @@ Would you like to see clothing recommendations in these colors?
               lastInteraction: new Date(),
               context: {
                 fullBodyImage,
-                garmentImage: mediaUrl,
+                garmentImage: uploadResult.imageUrl,
                 resultImage: tryOnResult.resultImageUrl
               }
             });

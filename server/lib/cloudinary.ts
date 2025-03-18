@@ -22,15 +22,20 @@ export interface CloudinaryUploadResult {
 export async function uploadImageToCloudinary(
   mediaUrl: string,
   userId: number,
-  imageType: 'selfie' | 'full_body'
+  imageType: 'selfie' | 'full_body' | 'garment'
 ): Promise<CloudinaryUploadResult> {
   try {
     // Log the upload attempt
     console.log(`Attempting to upload ${imageType} image for user ${userId}`);
 
-    // Download image from Twilio's temporary URL
+    // Download image from Twilio's temporary URL using auth headers
     const response = await axios.get(mediaUrl, {
-      responseType: 'arraybuffer'
+      responseType: 'arraybuffer',
+      headers: {
+        'Authorization': `Basic ${Buffer.from(
+          `${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`
+        ).toString('base64')}`
+      }
     });
 
     // Convert to base64 for Cloudinary upload
