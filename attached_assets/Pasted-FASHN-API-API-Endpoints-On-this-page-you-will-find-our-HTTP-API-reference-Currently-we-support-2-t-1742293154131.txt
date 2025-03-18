@@ -1,0 +1,183 @@
+FASHN API
+API Endpoints
+On this page you will find our HTTP API reference. Currently, we support 2 types of endpoints:
+
+run - Run prediction
+status/:id - Get prediction status
+🚨 Errors guide →
+Run prediction
+Initiate a new try-on prediction by posting to the following endpoint:
+
+POST
+https://api.fashn.ai/v1/run
+Request
+cURL
+JavaScript
+Python
+
+curl -X POST https://api.fashn.ai/v1/run \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+     -d '{
+           "model_image": "http://example.com/path/to/model.jpg",
+           "garment_image": "http://example.com/path/to/garment.jpg",
+           "category": "tops"
+         }'
+Properties:
+
+model_image
+Required
+image URL | base64
+Primary image of the person on whom the virtual try-on will be performed.
+
+garment_image
+Required
+image URL | base64
+Reference image of the clothing item to be tried on the model_image.
+
+Base64 must include prefix (e.g. data:image/jpg;base64, <YOUR_BASE64>)
+category
+'auto' | 'tops' | 'bottoms' | 'one-pieces'
+Use auto to enable automatic classification of the garment type. For flat-lay or ghost mannequin images, the system detects the garment type automatically. For on-model images, full-body shots default to a full outfit swap. For focused shots (upper or lower body), the system selects the most likely garment type (tops or bottoms).
+
+Default: auto
+
+moderation_level
+'conservative' | 'permissive' | 'none'
+Sets the content moderation level for garment images.
+
+-conservative enforces stricter modesty standards suitable for culturally sensitive contexts. Blocks underwear, swimwear, and revealing outfits.
+-permissive allows swimwear, underwear, and revealing garments, while still blocking explicit nudity.
+-none disables all content moderation
+
+Default: permissive
+
+Responsible Use Notice
+This technology is designed for ethical and appropriate virtual try-on applications. Misuse—such as generating inappropriate imagery of individuals without consent—violates our Terms of Service.
+
+Setting moderation_level: none does not absolve users from their responsibility to ensure ethical and lawful use. Violations may result in service denial.
+
+cover_feet
+boolean
+Allows long garments to cover the feet/shoes or change their appearance.
+
+Default: false
+
+adjust_hands
+boolean
+Allow to change the appearance of the model's hands. Example use-cases: Remove gloves, get hands out of pockets, long sleeves that should cover hands.
+
+Default: false
+
+restore_background
+boolean
+Apply additional steps to preserve the original background. Runtime will be slower. Not needed for simple backgrounds.
+
+Default: false
+
+restore_clothes
+boolean
+Apply additional steps to preserve the appearance of clothes that weren't swapped (e.g. keep pants if trying-on top).
+
+Default: false
+
+garment_photo_type
+auto | flat-lay | model
+Specifies the type of garment photo to optimize internal parameters for better performance. 'model' is for photos of garments on a model, 'flat-lay' is for flat-lay or ghost mannequin images, and 'auto' attempts to automatically detect the photo type.
+
+Default: auto
+
+long_top
+boolean
+Adjusts internal parameters for better performance on long tops such as: Longline shirts, tunics, coats, etc.
+
+Default: false
+
+mode
+performance | balanced | quality
+Specifies the mode of operation.
+
+-performance mode is faster but may compromise quality
+-balanced mode is a perfect middle ground between speed and quality
+-quality mode is slower, but delivers the highest quality results.
+
+Default: balanced
+
+seed
+int
+Sets random operations to a fixed state. Use the same seed to reproduce results with the same inputs, or different seed to force different results.
+
+Default: 42
+Min: 0
+Max: 2^32 - 1
+
+num_samples
+int
+Number of images to generate in a single run. Image generation has a random element in it, so trying multiple images at once increases the chances of getting a good result.
+
+Default: 1
+Min: 1
+Max: 4
+
+Response
+200
+The reponse will return the id of the prediction which you will need to use for getting the status and result.
+
+Response
+
+{
+  "id": "123a87r9-4129-4bb3-be18-9c9fb5bd7fc1-u1",
+  "error": null
+}
+Get prediction status
+Receive the status of the prediction by id. Unless in a queue, it takes up to 40 seconds to generate a try-on.
+
+GET
+https://api.fashn.ai/v1/status/:id
+Poll this endpoint to monitor the prediction's progress and retrieve the final output once available.
+
+Request
+cURL
+JavaScript
+Python
+
+curl -X GET https://api.fashn.ai/v1/status/123a87r9-4129-4bb3-be18-9c9fb5bd7fc1-u1 \
+     -H "Authorization: Bearer YOUR_API_KEY_HERE"
+Response
+The response will return the prediction id and status.
+
+Status types can be one of the following:
+
+status
+starting | in_queue | processing | completed | failed
+200
+Prediction in progress
+
+Response
+
+{
+  "id": "123a87r9-4129-4bb3-be18-9c9fb5bd7fc1-u1",
+  "status": "processing",
+  "error": null
+}
+200
+Prediction completed
+
+Response
+
+{
+  "id": "123a87r9-4129-4bb3-be18-9c9fb5bd7fc1-u1",
+  "status": "completed",
+  "output": [
+    "https://cdn.staging.fashn.ai/123a87r9-4129-4bb3-be18-9c9fb5bd7fc1-u1/output_0.png"
+  ],
+  "error": null
+}
+Rate Limits
+/run - Up to 50 requests per 60 seconds
+/status - Up to 50 requests per 10 seconds
+Rate Limit Adjustments
+Our API rate limits are in place to ensure fair usage and prevent misuse of our services. However, we understand that legitimate applications may require higher limits as they grow. If your app's usage nears the specified rate limits, and this usage is justified by your application's needs, we will gladly increase your rate limit. Please reach out to our support@fashn.ai to discuss your specific requirements.
+
+Privacy
+Inputs and outputs generated through the API will be automatically deleted from our systems after 72 hours. However, you can still view the requests via the web app interface.
