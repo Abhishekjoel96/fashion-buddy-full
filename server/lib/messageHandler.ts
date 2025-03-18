@@ -287,13 +287,29 @@ Would you like to see clothing recommendations in these colors?
         }
 
         try {
-          // Store full-body image
-          await storage.createUserImage({
-            userId: user.id,
-            imageUrl: mediaUrl,
-            cloudinaryPublicId: 'fullbody_' + Date.now(),
-            imageType: 'full_body'
-          });
+          const maxRetries = 3;
+          let lastError;
+          
+          for (let i = 0; i < maxRetries; i++) {
+            try {
+              // Store full-body image
+              await storage.createUserImage({
+                userId: user.id,
+                imageUrl: mediaUrl,
+                cloudinaryPublicId: 'fullbody_' + Date.now(),
+                imageType: 'full_body'
+              });
+              break; // Success, exit retry loop
+            } catch (err) {
+              lastError = err;
+              if (i < maxRetries - 1) {
+                console.log(`Retry ${i + 1} failed, attempting again...`);
+                await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
+                continue;
+              }
+              throw lastError;
+            }
+          }
 
           const garmentMessage = "Great! I've received your full-body photo. Now please send the photo of the garment you'd like to try on.";
           await storage.updateSession(session.id, {

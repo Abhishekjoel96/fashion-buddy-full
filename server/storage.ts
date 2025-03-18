@@ -207,14 +207,35 @@ export class DatabaseStorage implements IStorage {
   async createUserImage(image: InsertUserImage): Promise<UserImage> {
     try {
       console.log("Creating user image:", image);
+      
+      // Validate image data
+      if (!image.imageUrl || !image.userId || !image.imageType) {
+        throw new Error("Missing required image data");
+      }
+
+      // Check if user exists
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, image.userId));
+      
+      if (!user) {
+        throw new Error(`User ${image.userId} not found`);
+      }
+
+      // Insert image with validation
       const [result] = await db
         .insert(userImages)
         .values(image)
         .returning();
+
       console.log("Created user image:", result);
       return result;
     } catch (error) {
       console.error("Error creating user image:", error);
+      if (error instanceof Error && error.message.includes('relation "user_images" does not exist')) {
+        throw new Error("Database tables not initialized. Please run migrations.");
+      }
       throw error;
     }
   }
