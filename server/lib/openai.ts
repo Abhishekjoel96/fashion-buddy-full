@@ -99,7 +99,7 @@ export async function analyzeSkinTone(
       messages: [
         {
           role: "system",
-          content: `You are a skin tone analysis expert. Analyze the provided selfie and return details in this exact format:
+          content: `You are a skin tone analysis expert. Analyze the provided selfie and return the analysis as a json object in this exact format:
           {
             "tone": "descriptive tone name (e.g., Deep Brown, Medium Brown, Light Brown, etc.)",
             "undertone": "warm/cool/neutral"
