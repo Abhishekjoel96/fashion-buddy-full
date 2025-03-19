@@ -172,60 +172,81 @@ Would you like to see clothing recommendations in these colors?
         }
 
         try {
-          // Get first three recommended colors
-          const recommendedColors = session.context.recommendedColors.slice(0, 3);
-          let allProducts: any[] = [];
+            // Get first three recommended colors
+            const recommendedColors = session.context.recommendedColors.slice(0, 3);
+            let allProducts: any[] = [];
 
-          // Search for each recommended color
-          for (const color of recommendedColors) {
-            const products = await searchProducts(color, selectedBudget);
-            // Take top 2 products from each color
-            allProducts = [...allProducts, ...products.slice(0, 2)];
-          }
+            console.log("Fetching products for colors:", recommendedColors);
 
-          const productChunks: string[] = [];
-          let currentChunk = `🛍️ Here are some recommendations in your recommended colors:\n\n`;
+            // Search for each recommended color
+            for (const color of recommendedColors) {
+              try {
+                const products = await searchProducts(color, selectedBudget);
+                // Take top 2 products from each color
+                allProducts = [...allProducts, ...products.slice(0, 2)];
+                console.log(`Found ${products.length} products for color ${color}`);
+              } catch (error) {
+                console.error(`Error fetching products for color ${color}:`, error);
+                // Continue with other colors if one fails
+                continue;
+              }
+            }
 
-          for (const [index, product] of allProducts.entries()) {
-            const productText = `${index + 1}. ${product.title}\n💰 Price: ₹${product.price}\n👕 Brand: ${product.brand}\n🏪 From: ${product.source}\n${product.description ? `📝 ${product.description}\n` : ''}🔗 ${product.link}\n\n`;
+            if (allProducts.length === 0) {
+              throw new Error("No products found for any of the recommended colors");
+            }
 
-            if ((currentChunk + productText).length > 1500) {
+            const productChunks: string[] = [];
+            let currentChunk = `🛍️ Here are some recommendations in your recommended colors:\n\n`;
+
+            for (const [index, product] of allProducts.entries()) {
+              const productText = `${index + 1}. ${product.title}\n💰 Price: ₹${product.price}\n👕 Brand: ${product.brand}\n🏪 From: ${product.source}\n${product.description ? `📝 ${product.description}\n` : ''}🔗 ${product.link}\n\n`;
+
+              if ((currentChunk + productText).length > 1500) {
+                productChunks.push(currentChunk.trim());
+                currentChunk = `Continued...\n\n${productText}`;
+              } else {
+                currentChunk += productText;
+              }
+            }
+
+            const finalMessage = "\nWhat would you like to do next?\n1. Try these on virtually\n2. See more options\n3. Return to Main Menu";
+
+            if ((currentChunk + finalMessage).length > 1500) {
               productChunks.push(currentChunk.trim());
-              currentChunk = `Continued...\n\n${productText}`;
+              productChunks.push(finalMessage);
             } else {
-              currentChunk += productText;
+              currentChunk += finalMessage;
+              productChunks.push(currentChunk);
             }
-          }
 
-          const finalMessage = "\nWhat would you like to do next?\n1. Try these on virtually\n2. See more options\n3. Return to Main Menu";
-
-          if ((currentChunk + finalMessage).length > 1500) {
-            productChunks.push(currentChunk.trim());
-            productChunks.push(finalMessage);
-          } else {
-            currentChunk += finalMessage;
-            productChunks.push(currentChunk);
-          }
-
-          // Send messages in sequence
-          for (const chunk of productChunks) {
-            await sendWhatsAppMessage(phoneNumber, chunk);
-          }
-
-          await storage.updateSession(session.id, {
-            currentState: "SHOWING_PRODUCTS",
-            lastInteraction: new Date(),
-            context: {
-              recommendedColors,
-              currentPage: 1,
-              budget: selectedBudget,
-              lastOptions: ["1", "2", "3"]
+            // Send messages in sequence
+            for (const chunk of productChunks) {
+              await sendWhatsAppMessage(phoneNumber, chunk);
             }
-          });
-        } catch (error) {
-          console.error("Error fetching products:", error);
-          await sendWhatsAppMessage(phoneNumber, "Sorry, I couldn't fetch product recommendations at the moment. Please try again.");
-        }
+
+            await storage.updateSession(session.id, {
+              currentState: "SHOWING_PRODUCTS",
+              lastInteraction: new Date(),
+              context: {
+                recommendedColors,
+                currentPage: 1,
+                budget: selectedBudget,
+                lastOptions: ["1", "2", "3"]
+              }
+            });
+          } catch (error) {
+            console.error("Error fetching products:", error);
+            await sendWhatsAppMessage(phoneNumber, "Sorry, I couldn't fetch product recommendations at the moment. Please try again later.");
+
+            // Return to welcome state on error
+            await storage.updateSession(session.id, {
+              currentState: "WELCOME",
+              lastInteraction: new Date(),
+              context: null
+            });
+            await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
+          }
         break;
 
       case "SHOWING_PRODUCTS":
