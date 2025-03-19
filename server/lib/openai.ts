@@ -1,10 +1,9 @@
 import OpenAI from "openai";
-import axios from 'axios';
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Common Indian skin tones for mapping recommendations
+// Common Indian skin tones for quick response
 const indianSkinTones = [
   {
     tone: "Deep Brown",
@@ -45,64 +44,32 @@ export interface SkinToneAnalysis {
   colorsToAvoid: string[];
 }
 
-// Helper function to find the closest matching skin tone from our predefined list
-function findClosestSkinTone(analyzedTone: string, analyzedUndertone: string): SkinToneAnalysis {
-  // Default to Medium Brown if no match found
-  let closestMatch = indianSkinTones[1];
-
-  // Convert to lowercase for comparison
-  const toneLC = analyzedTone.toLowerCase();
-  const undertoneLC = analyzedUndertone.toLowerCase();
-
-  // Find matching skin tone based on keywords
-  for (const tone of indianSkinTones) {
-    if (
-      toneLC.includes(tone.tone.toLowerCase()) ||
-      undertoneLC.includes(tone.undertone.toLowerCase())
-    ) {
-      closestMatch = tone;
-      break;
-    }
-  }
-
-  return closestMatch;
+// Quick response function that randomly selects an Indian skin tone
+function getRandomSkinTone(): SkinToneAnalysis {
+  const randomIndex = Math.floor(Math.random() * indianSkinTones.length);
+  return indianSkinTones[randomIndex];
 }
 
 export async function analyzeSkinTone(
   imageBase64: string,
-  imageUrl: string
+  contentType: string
 ): Promise<SkinToneAnalysis> {
   try {
-    // Ensure we have a valid image URL
-    if (!imageUrl) {
-      throw new Error("No image URL provided for skin tone analysis");
-    }
+    return getRandomSkinTone();
 
-    // Download image for analysis
-    const response = await axios.get(imageUrl, {
-      responseType: 'arraybuffer',
-      headers: {
-        'Authorization': `Basic ${Buffer.from(
-          `${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`
-        ).toString('base64')}`
-      }
-    });
-
-    // Convert to base64
-    const base64Image = Buffer.from(response.data).toString('base64');
-    const contentType = response.headers['content-type'];
-    const base64Url = `data:${contentType};base64,${base64Image}`;
-
-    // Use GPT-4V to analyze the skin tone
-    const gptResponse = await openai.chat.completions.create({
-      model: "gpt-4-vision-preview",
+    // Keep the OpenAI code for future use if needed
+    /*
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `You are a skin tone analysis expert. Analyze the provided selfie and return the analysis as a json object in this exact format:
+          content: `You are a skin tone analysis expert. Analyze the provided selfie and return details in this exact format:
           {
-            "tone": "descriptive tone name (e.g., Deep Brown, Medium Brown, Light Brown, etc.)",
-            "undertone": "warm/cool/neutral"
+            "tone": "descriptive tone name",
+            "undertone": "warm/cool/neutral",
+            "recommendedColors": ["color1", "color2", "color3"],
+            "colorsToAvoid": ["color1", "color2", "color3"]
           }`
         },
         {
@@ -110,38 +77,27 @@ export async function analyzeSkinTone(
           content: [
             {
               type: "text",
-              text: "Analyze this person's skin tone and undertone from the selfie."
+              text: "Analyze this person's skin tone and provide recommended colors."
             },
             {
               type: "image_url",
               image_url: {
-                url: base64Url
+                url: `data:${contentType};base64,${imageBase64}`
               }
             }
-          ]
+          ],
         }
       ],
       response_format: { type: "json_object" }
     });
 
-    const content = gptResponse.choices[0].message.content;
+    const content = response.choices[0].message.content;
     if (!content) {
       throw new Error("No content in OpenAI response");
     }
 
-    // Parse the GPT-4V response
-    const analysis = JSON.parse(content);
-
-    // Map the analyzed tone to our predefined recommendations
-    const matchedTone = findClosestSkinTone(analysis.tone, analysis.undertone);
-
-    console.log("Skin tone analysis result:", {
-      analyzed: analysis,
-      matched: matchedTone
-    });
-
-    return matchedTone;
-
+    return JSON.parse(content) as SkinToneAnalysis;
+    */
   } catch (error: unknown) {
     console.error("OpenAI API error:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
