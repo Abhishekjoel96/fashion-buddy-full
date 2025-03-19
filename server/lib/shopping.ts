@@ -71,15 +71,18 @@ export async function searchProducts(
           source: item.source || "Unknown"
         };
       })
-      .filter((product: ShoppingProduct) => {
+      .filter((product: ShoppingProduct | undefined) => {
+        if (!product) return false;
         if (!budget) return true;
         const [min, max] = budget.split("-").map(Number);
         return product.price >= min && (!max || product.price <= max);
       })
       // Sort by rating and number of reviews if available
-      .sort((a, b) => 
-        (b.rating || 0) * (b.reviews || 0) - (a.rating || 0) * (a.reviews || 0)
-      );
+      .sort((a, b) => {
+        if (!a || !b) return 0;
+        return (b.rating || 0) * (b.reviews || 0) - (a.rating || 0) * (a.reviews || 0);
+      })
+      .filter(product => product !== undefined);
 
     // Return top 5 results
     return products.slice(0, 5);
