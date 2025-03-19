@@ -8,6 +8,8 @@ export interface ShoppingProduct {
   image?: string;
   description?: string;
   source: string;  // e.g., "Myntra", "Flipkart", "Amazon"
+  rating?: number;
+  reviews?: number;
 }
 
 interface SerpApiResponse {
@@ -24,6 +26,10 @@ interface SerpApiResponse {
   }>;
 }
 
+if (!process.env.SERP_API_KEY) {
+  throw new Error("SERP_API_KEY environment variable must be set");
+}
+
 export async function searchProducts(
   color: string,
   budget?: string
@@ -31,8 +37,9 @@ export async function searchProducts(
   try {
     console.log(`Searching for ${color} products in budget range ${budget}`);
 
-    // Format query to include major Indian e-commerce sites
+    // Format query to include major Indian e-commerce sites and color
     const query = `${color} shirts site:(myntra.com OR flipkart.com OR amazon.in)`;
+    console.log("Search query:", query);
 
     const response = await axios.get<SerpApiResponse>(
       `https://serpapi.com/search.json`,
@@ -44,51 +51,71 @@ export async function searchProducts(
           location: "India",
           google_domain: "google.co.in",
           gl: "in",
-          hl: "en"
+          hl: "en",
+          num: 10 // Request more results to ensure we have enough after filtering
         }
       }
     );
 
-    console.log(`Found ${response.data.shopping_results.length} products`);
+    if (!response.data.shopping_results) {
+      console.log("No shopping results found");
+      return [];
+    }
+
+    console.log(`Found ${response.data.shopping_results.length} initial products`);
 
     const products = response.data.shopping_results
       .map((item) => {
-        // Extract price number from string (remove currency symbol and convert to number)
-        const priceMatch = item.price.match(/[\d,]+/);
-        const price = priceMatch ? parseFloat(priceMatch[0].replace(/,/g, '')) : 0;
+        try {
+          // Extract price number from string (remove currency symbol and convert to number)
+          const priceMatch = item.price?.match(/[\d,]+/);
+          const price = priceMatch ? parseFloat(priceMatch[0].replace(/,/g, '')) : 0;
 
-        // Extract brand from extensions or title
-        const brand = item.extensions?.find(ext => ext.includes("Brand:"))?.replace("Brand: ", "") 
-          || item.title.split(' ')[0];
+          // Extract brand from extensions or title
+          const brand = item.extensions?.find(ext => ext.includes("Brand:"))?.replace("Brand: ", "") 
+            || item.title?.split(' ')[0] || "Unknown";
 
-        return {
-          title: item.title,
-          price,
-          brand: brand || "Unknown",
-          link: item.link,
-          image: item.thumbnail,
-          description: item.description,
-          source: item.source || "Unknown"
-        };
+          return {
+            title: item.title || "Unknown Product",
+            price,
+            brand,
+            link: item.link,
+            image: item.thumbnail,
+            description: item.description,
+            source: item.source || "Unknown",
+            rating: item.rating,
+            reviews: item.reviews
+          };
+        } catch (error) {
+          console.error("Error processing product item:", error);
+          return null;
+        }
       })
-      .filter((product: ShoppingProduct | undefined) => {
+      .filter((product): product is ShoppingProduct => {
         if (!product) return false;
-        if (!budget) return true;
-        const [min, max] = budget.split("-").map(Number);
-        return product.price >= min && (!max || product.price <= max);
-      })
-      // Sort by rating and number of reviews if available
-      .sort((a, b) => {
-        if (!a || !b) return 0;
-        return (b.rating || 0) * (b.reviews || 0) - (a.rating || 0) * (a.reviews || 0);
-      })
-      .filter(product => product !== undefined);
 
-    // Return top 5 results
-    return products.slice(0, 5);
-  } catch (error: unknown) {
+        // Apply budget filter if specified
+        if (budget) {
+          const [min, max] = budget.split("-").map(Number);
+          return product.price >= min && (!max || product.price <= max);
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        // Sort by rating * number of reviews, defaulting to 0 if not available
+        const aScore = (a.rating || 0) * (a.reviews || 0);
+        const bScore = (b.rating || 0) * (b.reviews || 0);
+        return bScore - aScore;
+      });
+
+    console.log(`Returning ${products.length} filtered products`);
+    return products.slice(0, 5); // Return top 5 results
+
+  } catch (error) {
     console.error("SerpApi search error:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to search products: ${errorMessage}`);
+    const errorMessage = error instanceof Error 
+      ? `SERP API Error: ${error.message}`
+      : 'Unknown error occurred while searching products';
+    throw new Error(errorMessage);
   }
 }
