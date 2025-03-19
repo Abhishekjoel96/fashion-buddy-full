@@ -95,7 +95,7 @@ export async function analyzeSkinTone(
 
     // Use GPT-4V to analyze the skin tone
     const gptResponse = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4-vision-preview",
       messages: [
         {
           role: "system",
