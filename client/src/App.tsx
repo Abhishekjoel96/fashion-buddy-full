@@ -6,6 +6,9 @@ import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import LandingPage from "@/pages/landing";
 import { PublicLayout } from "@/components/layouts/public-layout";
+import AuthPage from "@/pages/auth-page";
+import { AuthProvider } from "@/hooks/use-auth";
+import { ProtectedRoute } from "@/lib/protected-route";
 
 function Router() {
   return (
@@ -15,7 +18,8 @@ function Router() {
           <LandingPage />
         </PublicLayout>
       )} />
-      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/auth" component={AuthPage} />
+      <ProtectedRoute path="/dashboard" component={Dashboard} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -24,8 +28,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
+      <AuthProvider>
+        <Router />
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

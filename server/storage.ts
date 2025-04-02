@@ -6,6 +6,8 @@ import { userImages, type UserImage, type InsertUserImage } from "@shared/schema
 
 export interface IStorage {
   getUser(phoneNumber: string): Promise<User | undefined>;
+  getUserById(id: number): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, updates: Partial<User>): Promise<User>;
   getSession(userId: number): Promise<Session | undefined>;
@@ -49,6 +51,36 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getUserById(id: number): Promise<User | undefined> {
+    try {
+      console.log("Getting user by ID:", id);
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, id));
+      console.log("Retrieved user:", user);
+      return user;
+    } catch (error) {
+      console.error("Error getting user by ID:", error);
+      throw error;
+    }
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    try {
+      console.log("Getting user by email:", email);
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, email));
+      console.log("Retrieved user:", user);
+      return user;
+    } catch (error) {
+      console.error("Error getting user by email:", error);
+      throw error;
+    }
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     try {
       console.log("Creating user:", insertUser);
@@ -56,7 +88,9 @@ export class DatabaseStorage implements IStorage {
       // Create a properly typed user object
       const userValues = {
         name: insertUser.name,
+        email: insertUser.email,
         phoneNumber: insertUser.phoneNumber,
+        password: insertUser.password,
         skinTone: insertUser.skinTone,
         preferences: insertUser.preferences,
         subscriptionTier: insertUser.subscriptionTier || 'free',
