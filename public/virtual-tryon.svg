@@ -1,0 +1,61 @@
+<svg width="300" height="200" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="#f3f4f6" />
+  
+  <!-- Person silhouette -->
+  <circle cx="80" cy="50" r="15" fill="#9ca3af" /> <!-- Head -->
+  <rect x="65" y="65" width="30" height="70" rx="5" fill="#e5e7eb" /> <!-- Body -->
+  <rect x="50" y="75" width="15" height="40" rx="3" fill="#e5e7eb" /> <!-- Left arm -->
+  <rect x="95" y="75" width="15" height="40" rx="3" fill="#e5e7eb" /> <!-- Right arm -->
+  <rect x="65" y="135" width="12" height="40" rx="3" fill="#e5e7eb" /> <!-- Left leg -->
+  <rect x="83" y="135" width="12" height="40" rx="3" fill="#e5e7eb" /> <!-- Right leg -->
+  
+  <!-- Shirt options -->
+  <rect x="140" y="30" width="40" height="50" rx="3" fill="#3b82f6" /> <!-- Blue shirt -->
+  <text x="160" y="90" font-family="Arial" font-size="8" fill="#111827" text-anchor="middle">Option 1</text>
+  
+  <rect x="190" y="30" width="40" height="50" rx="3" fill="#10b981" /> <!-- Green shirt -->
+  <text x="210" y="90" font-family="Arial" font-size="8" fill="#111827" text-anchor="middle">Option 2</text>
+  
+  <rect x="240" y="30" width="40" height="50" rx="3" fill="#8b5cf6" /> <!-- Purple shirt -->
+  <text x="260" y="90" font-family="Arial" font-size="8" fill="#111827" text-anchor="middle">Option 3</text>
+  
+  <!-- Virtual try-on results -->
+  <g transform="translate(140, 110)">
+    <!-- Person with blue shirt -->
+    <circle cx="20" cy="15" r="10" fill="#9ca3af" /> <!-- Head -->
+    <rect x="10" y="25" width="20" height="40" rx="3" fill="#3b82f6" /> <!-- Blue shirt on body -->
+    <rect x="0" y="30" width="10" height="20" rx="2" fill="#e5e7eb" /> <!-- Left arm -->
+    <rect x="30" y="30" width="10" height="20" rx="2" fill="#e5e7eb" /> <!-- Right arm -->
+    <rect x="12" y="65" width="7" height="25" rx="2" fill="#e5e7eb" /> <!-- Left leg -->
+    <rect x="21" y="65" width="7" height="25" rx="2" fill="#e5e7eb" /> <!-- Right leg -->
+  </g>
+  
+  <g transform="translate(190, 110)">
+    <!-- Person with green shirt -->
+    <circle cx="20" cy="15" r="10" fill="#9ca3af" /> <!-- Head -->
+    <rect x="10" y="25" width="20" height="40" rx="3" fill="#10b981" /> <!-- Green shirt on body -->
+    <rect x="0" y="30" width="10" height="20" rx="2" fill="#e5e7eb" /> <!-- Left arm -->
+    <rect x="30" y="30" width="10" height="20" rx="2" fill="#e5e7eb" /> <!-- Right arm -->
+    <rect x="12" y="65" width="7" height="25" rx="2" fill="#e5e7eb" /> <!-- Left leg -->
+    <rect x="21" y="65" width="7" height="25" rx="2" fill="#e5e7eb" /> <!-- Right leg -->
+  </g>
+  
+  <g transform="translate(240, 110)">
+    <!-- Person with purple shirt -->
+    <circle cx="20" cy="15" r="10" fill="#9ca3af" /> <!-- Head -->
+    <rect x="10" y="25" width="20" height="40" rx="3" fill="#8b5cf6" /> <!-- Purple shirt on body -->
+    <rect x="0" y="30" width="10" height="20" rx="2" fill="#e5e7eb" /> <!-- Left arm -->
+    <rect x="30" y="30" width="10" height="20" rx="2" fill="#e5e7eb" /> <!-- Right arm -->
+    <rect x="12" y="65" width="7" height="25" rx="2" fill="#e5e7eb" /> <!-- Left leg -->
+    <rect x="21" y="65" width="7" height="25" rx="2" fill="#e5e7eb" /> <!-- Right leg -->
+  </g>
+  
+  <!-- Process arrows -->
+  <path d="M110,80 L135,80" stroke="#2563eb" stroke-width="2" stroke-dasharray="4" />
+  <polygon points="135,80 130,75 130,85" fill="#2563eb" />
+  
+  <!-- Labels -->
+  <text x="80" y="190" font-family="Arial" font-size="10" fill="#111827" text-anchor="middle">Your Photo</text>
+  <text x="200" y="20" font-family="Arial" font-size="10" fill="#111827" text-anchor="middle">Available Shirts</text>
+  <text x="200" y="190" font-family="Arial" font-size="10" fill="#111827" text-anchor="middle">Virtual Try-On Results</text>
+</svg>

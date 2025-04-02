@@ -1,0 +1,55 @@
+<svg width="300" height="200" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="#f3f4f6" />
+  
+  <!-- Face photo -->
+  <rect x="50" y="40" width="120" height="120" rx="8" fill="#e5e7eb" />
+  <circle cx="110" cy="100" r="35" fill="#d4a76a" /> <!-- Face circle -->
+  
+  <!-- Facial points -->
+  <circle cx="95" cy="85" r="2" fill="#2563eb" /> <!-- Left eye -->
+  <circle cx="125" cy="85" r="2" fill="#2563eb" /> <!-- Right eye -->
+  <circle cx="110" cy="95" r="2" fill="#2563eb" /> <!-- Nose -->
+  <circle cx="110" cy="115" r="2" fill="#2563eb" /> <!-- Mouth -->
+  <circle cx="85" cy="100" r="2" fill="#2563eb" /> <!-- Left cheek -->
+  <circle cx="135" cy="100" r="2" fill="#2563eb" /> <!-- Right cheek -->
+  <circle cx="110" cy="75" r="2" fill="#2563eb" /> <!-- Forehead -->
+  <circle cx="110" cy="130" r="2" fill="#2563eb" /> <!-- Chin -->
+  
+  <!-- Point connections -->
+  <line x1="95" y1="85" x2="125" y2="85" stroke="#2563eb" stroke-width="1" stroke-dasharray="2" />
+  <line x1="110" y1="75" x2="110" y2="130" stroke="#2563eb" stroke-width="1" stroke-dasharray="2" />
+  <line x1="85" y1="100" x2="135" y2="100" stroke="#2563eb" stroke-width="1" stroke-dasharray="2" />
+  <line x1="95" y1="85" x2="110" y2="95" stroke="#2563eb" stroke-width="1" stroke-dasharray="2" />
+  <line x1="125" y1="85" x2="110" y2="95" stroke="#2563eb" stroke-width="1" stroke-dasharray="2" />
+  <line x1="110" y1="95" x2="110" y2="115" stroke="#2563eb" stroke-width="1" stroke-dasharray="2" />
+  
+  <!-- AI analysis arrow -->
+  <path d="M180,100 L210,100" stroke="#2563eb" stroke-width="2" stroke-dasharray="4" />
+  <polygon points="210,100 205,95 205,105" fill="#2563eb" />
+  
+  <!-- AI analysis result -->
+  <rect x="220" y="50" width="70" height="100" rx="8" fill="#e5e7eb" />
+  
+  <!-- Analysis text elements -->
+  <rect x="230" y="60" width="50" height="12" rx="2" fill="#9ca3af" />
+  <text x="255" y="69" font-family="Arial" font-size="8" fill="white" text-anchor="middle">Skin Tone</text>
+  
+  <rect x="230" y="75" width="50" height="10" rx="2" fill="#d4a76a" />
+  <text x="255" y="83" font-family="Arial" font-size="8" fill="white" text-anchor="middle">Medium</text>
+  
+  <rect x="230" y="95" width="50" height="12" rx="2" fill="#9ca3af" />
+  <text x="255" y="104" font-family="Arial" font-size="8" fill="white" text-anchor="middle">Undertone</text>
+  
+  <rect x="230" y="110" width="50" height="10" rx="2" fill="#f59e0b" />
+  <text x="255" y="118" font-family="Arial" font-size="8" fill="white" text-anchor="middle">Warm</text>
+  
+  <rect x="230" y="130" width="50" height="12" rx="2" fill="#9ca3af" />
+  <text x="255" y="139" font-family="Arial" font-size="8" fill="white" text-anchor="middle">Contrast</text>
+  
+  <rect x="230" y="145" width="50" height="10" rx="2" fill="#3b82f6" />
+  <text x="255" y="153" font-family="Arial" font-size="8" fill="white" text-anchor="middle">Medium</text>
+  
+  <!-- Title text -->
+  <text x="110" y="25" font-family="Arial" font-size="14" font-weight="bold" fill="#111827" text-anchor="middle">AI Skin Tone Analysis</text>
+  <text x="110" y="175" font-family="Arial" font-size="10" fill="#4b5563" text-anchor="middle">27 facial points analyzed</text>
+</svg>
