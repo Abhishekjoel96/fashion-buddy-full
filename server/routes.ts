@@ -3,8 +3,11 @@ import { createServer, type Server } from "http";
 import { validateTwilioRequest, sendWhatsAppMessage } from "./lib/twilio";
 import { handleIncomingMessage } from "./lib/messageHandler";
 import { storage } from "./storage";
+import { setupAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication
+  setupAuth(app);
   // Stats endpoint for dashboard
   app.get("/api/stats", async (_req, res) => {
     try {
@@ -24,22 +27,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Endpoint to start a new chat
   app.post("/api/start-chat", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
     try {
       const { name, phoneNumber } = req.body;
+      const authenticatedUser = req.user;
 
-      // Create or get user
-      let user = await storage.getUser(phoneNumber);
+      // Get user by ID to ensure we're working with the authenticated user
+      const user = await storage.getUserById(authenticatedUser.id);
+      
       if (!user) {
-        user = await storage.createUser({
-          name,
-          phoneNumber,
-          skinTone: null,
-          preferences: null
-        });
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Check subscription limits for color analysis and virtual try-on
+      const isFree = user.subscriptionTier === 'free';
+      const isColorLimitReached = isFree && user.colorAnalysisCount >= 1;
+      const isTryOnLimitReached = isFree && user.virtualTryOnCount >= 1;
+      
+      if (isColorLimitReached && isTryOnLimitReached) {
+        const upgradeMessage = `It looks like you've reached your free plan limits. Upgrade to Premium for unlimited color analyses and virtual try-ons!`;
+        await sendWhatsAppMessage(user.phoneNumber, upgradeMessage);
       }
 
       // Send welcome message with user's name
-      const welcomeMessage = `Hello ${name}! 👋 Welcome to WhatsApp Fashion Buddy! 
+      const welcomeMessage = `Hello ${user.name}! 👋 Welcome to WhatsApp Fashion Buddy! 
 I can help you find clothes that match your skin tone or try on clothes virtually. 
 What would you like to do today?
 
@@ -47,14 +61,18 @@ What would you like to do today?
 2. Virtual Try-On
 3. End Chat`;
 
-      await sendWhatsAppMessage(phoneNumber, welcomeMessage);
+      await sendWhatsAppMessage(user.phoneNumber, welcomeMessage);
 
       // Create new session
       const session = await storage.createSession({
         userId: user.id,
         currentState: "WELCOME",
         lastInteraction: new Date(),
-        context: null
+        context: {
+          subscriptionTier: user.subscriptionTier,
+          colorAnalysisCount: user.colorAnalysisCount,
+          virtualTryOnCount: user.virtualTryOnCount
+        }
       });
 
       // Store welcome message in conversations
