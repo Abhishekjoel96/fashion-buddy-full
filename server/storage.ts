@@ -20,6 +20,17 @@ export interface IStorage {
   getUserImages(userId: number, imageType?: string): Promise<UserImage[]>;
   deleteUserImage(id: number): Promise<void>;
   getUserImage(userId: number): Promise<UserImage | undefined>;
+  updateUserSubscription(
+    userId: number, 
+    subscriptionData: {
+      subscriptionTier: string;
+      subscriptionExpiresAt?: Date;
+      stripeCustomerId?: string;
+      stripeSubscriptionId?: string;
+    }
+  ): Promise<User>;
+  incrementColorAnalysisCount(userId: number): Promise<User>;
+  incrementVirtualTryOnCount(userId: number): Promise<User>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -41,15 +52,19 @@ export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     try {
       console.log("Creating user:", insertUser);
-      const [user] = await db
-        .insert(users)
-        .values({
-          name: insertUser.name,
-          phoneNumber: insertUser.phoneNumber,
-          skinTone: insertUser.skinTone,
-          preferences: insertUser.preferences
-        })
-        .returning();
+      
+      // Create a properly typed user object
+      const userValues = {
+        name: insertUser.name,
+        phoneNumber: insertUser.phoneNumber,
+        skinTone: insertUser.skinTone,
+        preferences: insertUser.preferences,
+        subscriptionTier: insertUser.subscriptionTier || 'free',
+        colorAnalysisCount: 0,
+        virtualTryOnCount: 0
+      };
+      
+      const [user] = await db.insert(users).values(userValues).returning();
       console.log("Created user:", user);
       return user;
     } catch (error) {
@@ -94,15 +109,16 @@ export class DatabaseStorage implements IStorage {
   async createSession(insertSession: InsertSession): Promise<Session> {
     try {
       console.log("Creating session:", insertSession);
-      const [session] = await db
-        .insert(sessions)
-        .values({
-          userId: insertSession.userId,
-          currentState: insertSession.currentState,
-          lastInteraction: insertSession.lastInteraction,
-          context: insertSession.context
-        })
-        .returning();
+      
+      // Create a properly typed session object
+      const sessionValues = {
+        userId: insertSession.userId,
+        currentState: insertSession.currentState,
+        lastInteraction: insertSession.lastInteraction,
+        context: insertSession.context
+      };
+      
+      const [session] = await db.insert(sessions).values(sessionValues).returning();
       console.log("Created session:", session);
       return session;
     } catch (error) {
@@ -249,7 +265,7 @@ export class DatabaseStorage implements IStorage {
         .where(eq(userImages.userId, userId));
 
       if (imageType) {
-        query = query.where(eq(userImages.imageType, imageType));
+        query = query.where(and(eq(userImages.imageType, imageType)));
       }
 
       const images = await query.orderBy(desc(userImages.createdAt));
@@ -280,6 +296,74 @@ export class DatabaseStorage implements IStorage {
       return result[0];
     } catch (error) {
       console.error("Error getting user image:", error);
+      throw error;
+    }
+  }
+
+  async updateUserSubscription(
+    userId: number, 
+    subscriptionData: {
+      subscriptionTier: string;
+      subscriptionExpiresAt?: Date;
+      stripeCustomerId?: string;
+      stripeSubscriptionId?: string;
+    }
+  ): Promise<User> {
+    try {
+      console.log("Updating user subscription:", userId, subscriptionData);
+      const [user] = await db
+        .update(users)
+        .set(subscriptionData)
+        .where(eq(users.id, userId))
+        .returning();
+      console.log("Updated user subscription:", user);
+      return user;
+    } catch (error) {
+      console.error("Error updating user subscription:", error);
+      throw error;
+    }
+  }
+
+  async incrementColorAnalysisCount(userId: number): Promise<User> {
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId));
+      
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          colorAnalysisCount: (user.colorAnalysisCount || 0) + 1
+        })
+        .where(eq(users.id, userId))
+        .returning();
+      
+      return updatedUser;
+    } catch (error) {
+      console.error("Error incrementing color analysis count:", error);
+      throw error;
+    }
+  }
+
+  async incrementVirtualTryOnCount(userId: number): Promise<User> {
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId));
+      
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          virtualTryOnCount: (user.virtualTryOnCount || 0) + 1
+        })
+        .where(eq(users.id, userId))
+        .returning();
+      
+      return updatedUser;
+    } catch (error) {
+      console.error("Error incrementing virtual try-on count:", error);
       throw error;
     }
   }
