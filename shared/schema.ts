@@ -12,6 +12,12 @@ export const users = pgTable("users", {
     style?: string[];
     sizes?: string[];
   }>(),
+  subscriptionTier: text("subscription_tier").default("free").notNull(), // 'free' or 'premium'
+  subscriptionExpiresAt: timestamp("subscription_expires_at"),
+  colorAnalysisCount: integer("color_analysis_count").default(0).notNull(),
+  virtualTryOnCount: integer("virtual_try_on_count").default(0).notNull(),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -35,6 +41,11 @@ export const sessions = pgTable("sessions", {
     analyzedImage?: string;
     fullBodyImage?: string;
     garmentImage?: string;
+    recommendedColors?: string[];
+    subscriptionPrompted?: boolean;
+    currentPage?: number;
+    budget?: string;
+    resultImage?: string;
   }>(),
 });
 
@@ -53,6 +64,12 @@ export const insertUserSchema = createInsertSchema(users).pick({
   phoneNumber: true,
   skinTone: true,
   preferences: true,
+  subscriptionTier: true,
+  subscriptionExpiresAt: true,
+  colorAnalysisCount: true,
+  virtualTryOnCount: true,
+  stripeCustomerId: true,
+  stripeSubscriptionId: true,
 });
 
 export const insertUserImageSchema = createInsertSchema(userImages).pick({

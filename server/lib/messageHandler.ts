@@ -100,8 +100,39 @@ export async function handleIncomingMessage(
         }
 
         try {
+          // Check if user has reached their color analysis limit
+          if (user.subscriptionTier === 'free' && user.colorAnalysisCount >= 1) {
+            const upgradeMessage = `You've reached your monthly limit for free color analyses. 
+
+Would you like to upgrade to Premium for ₹129/month and enjoy:
+- 10 color analyses per month
+- 5 recommended colors (vs. 3 for free)
+- List of colors to avoid
+- 10 virtual try-ons per month (vs. 1 for free)
+- Access to our full catalog
+- Priority support
+
+1. Upgrade to Premium
+2. Return to Main Menu`;
+
+            await storage.updateSession(session.id, {
+              currentState: "SUBSCRIPTION_PROMPT",
+              lastInteraction: new Date(),
+              context: {
+                subscriptionPrompted: true,
+                lastOptions: ["1", "2"]
+              }
+            });
+
+            await sendWhatsAppMessage(phoneNumber, upgradeMessage);
+            return;
+          }
+
           // Now we analyze the photo after receiving it
           analysis = await analyzeSkinTone("", mediaUrl); // Use mediaUrl here
+          
+          // Increment the color analysis count
+          await storage.incrementColorAnalysisCount(user.id);
 
           // Update user's skin tone
           await storage.updateUser(user.id, {
@@ -109,17 +140,29 @@ export async function handleIncomingMessage(
             preferences: user.preferences || {}
           });
 
-          const colorMessage = `🔍 Based on my analysis of your photo, your skin tone appears to be:
+          // For free tier, limit to 3 colors and no colors to avoid
+          let recommendedColors = analysis.recommendedColors;
+          let colorsToAvoid = analysis.colorsToAvoid;
+          
+          if (user.subscriptionTier === 'free') {
+            recommendedColors = recommendedColors.slice(0, 3);
+            colorsToAvoid = []; // No colors to avoid for free tier
+          }
+
+          let colorMessage = `🔍 Based on my analysis of your photo, your skin tone appears to be:
 Skin Tone: ${analysis.tone}
 Undertone: ${analysis.undertone}
 
 Recommended Colors: 
-${analysis.recommendedColors.join(", ")}
+${recommendedColors.join(", ")}`;
 
-Colors to Avoid:
-${analysis.colorsToAvoid.join(", ")}
+          // Only show colors to avoid for premium users
+          if (user.subscriptionTier === 'premium' && colorsToAvoid.length > 0) {
+            colorMessage += `\n\nColors to Avoid:
+${colorsToAvoid.join(", ")}`;
+          }
 
-Would you like to see clothing recommendations in these colors?
+          colorMessage += `\n\nWould you like to see clothing recommendations in these colors?
 1. Budget Range ₹500-₹1500
 2. Budget Range ₹1500-₹3000
 3. Budget Range ₹3000+
@@ -129,7 +172,7 @@ Would you like to see clothing recommendations in these colors?
             currentState: "AWAITING_BUDGET",
             lastInteraction: new Date(),
             context: {
-              recommendedColors: analysis.recommendedColors,
+              recommendedColors: recommendedColors,
               lastMessage: colorMessage,
               lastOptions: ["1", "2", "3", "4"]
             }
@@ -199,7 +242,8 @@ Would you like to see clothing recommendations in these colors?
             const productChunks: string[] = [];
             let currentChunk = `🛍️ Here are some recommendations in your recommended colors:\n\n`;
 
-            for (const [index, product] of allProducts.entries()) {
+            // Use forEach with index instead of entries() to avoid TypeScript issues
+            allProducts.forEach((product, index) => {
               const productText = `${index + 1}. ${product.title}\n💰 Price: ₹${product.price}\n👕 Brand: ${product.brand}\n🏪 From: ${product.source}\n${product.description ? `📝 ${product.description}\n` : ''}🔗 ${product.link}\n\n`;
 
               if ((currentChunk + productText).length > 1500) {
@@ -208,7 +252,7 @@ Would you like to see clothing recommendations in these colors?
               } else {
                 currentChunk += productText;
               }
-            }
+            });
 
             const finalMessage = "\nWhat would you like to do next?\n1. Try these on virtually\n2. See more options\n3. Return to Main Menu";
 
@@ -343,6 +387,34 @@ Would you like to see clothing recommendations in these colors?
         }
 
         try {
+          // Check if user has reached their virtual try-on limit
+          if (user.subscriptionTier === 'free' && user.virtualTryOnCount >= 1) {
+            const upgradeMessage = `You've reached your monthly limit for free virtual try-ons. 
+
+Would you like to upgrade to Premium for ₹129/month and enjoy:
+- 10 color analyses per month
+- 5 recommended colors (vs. 3 for free)
+- List of colors to avoid
+- 10 virtual try-ons per month (vs. 1 for free)
+- Access to our full catalog
+- Priority support
+
+1. Upgrade to Premium
+2. Return to Main Menu`;
+
+            await storage.updateSession(session.id, {
+              currentState: "SUBSCRIPTION_PROMPT",
+              lastInteraction: new Date(),
+              context: {
+                subscriptionPrompted: true,
+                lastOptions: ["1", "2"]
+              }
+            });
+
+            await sendWhatsAppMessage(phoneNumber, upgradeMessage);
+            return;
+          }
+          
           // Upload garment image to Cloudinary
           const uploadResult = await uploadImageToCloudinary(mediaUrl, user.id, 'garment');
 
@@ -366,6 +438,9 @@ Would you like to see clothing recommendations in these colors?
           const tryOnResult = await virtualTryOn(fullBodyImage, uploadResult.imageUrl);
 
           if (tryOnResult.success) {
+            // Increment virtual try-on count
+            await storage.incrementVirtualTryOnCount(user.id);
+            
             const tryOnResponse = `Here's how the garment would look on you!\n${tryOnResult.resultImageUrl}\n\nWould you like to:\n1. Try another garment\n2. Return to main menu`;
 
             await storage.updateSession(session.id, {
@@ -390,6 +465,34 @@ Would you like to see clothing recommendations in these colors?
 
       case "SHOWING_TRYON":
         if (message === "1") {
+          // Check if user has reached their virtual try-on limit
+          if (user.subscriptionTier === 'free' && user.virtualTryOnCount >= 1) {
+            const upgradeMessage = `You've reached your monthly limit for free virtual try-ons. 
+
+Would you like to upgrade to Premium for ₹129/month and enjoy:
+- 10 color analyses per month
+- 5 recommended colors (vs. 3 for free)
+- List of colors to avoid
+- 10 virtual try-ons per month (vs. 1 for free)
+- Access to our full catalog
+- Priority support
+
+1. Upgrade to Premium
+2. Return to Main Menu`;
+
+            await storage.updateSession(session.id, {
+              currentState: "SUBSCRIPTION_PROMPT",
+              lastInteraction: new Date(),
+              context: {
+                subscriptionPrompted: true,
+                lastOptions: ["1", "2"]
+              }
+            });
+
+            await sendWhatsAppMessage(phoneNumber, upgradeMessage);
+            return;
+          }
+          
           const retryMessage = "Please send another garment photo to try on.";
           await storage.updateSession(session.id, {
             currentState: "AWAITING_GARMENT",
@@ -406,6 +509,61 @@ Would you like to see clothing recommendations in these colors?
             context: null
           });
           await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
+        }
+        break;
+        
+      case "SUBSCRIPTION_PROMPT":
+        if (message === "1") {
+          // Handle upgrade to premium
+          // In a real implementation, this would redirect to a payment link
+          // For now, we'll just simulate the upgrade
+          
+          // Set user to premium tier
+          const oneMonthFromNow = new Date();
+          oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+          
+          await storage.updateUserSubscription(user.id, {
+            subscriptionTier: 'premium',
+            subscriptionExpiresAt: oneMonthFromNow
+          });
+          
+          // Confirm the subscription
+          const subscriptionMessage = `🎉 Congratulations! You've been upgraded to Premium tier.
+          
+Your subscription includes:
+- 10 color analyses per month
+- 5 recommended colors with undertone analysis
+- List of colors to avoid
+- 10 virtual try-ons per month
+- Full catalog access
+- Priority support
+
+Your subscription is valid until ${oneMonthFromNow.toLocaleDateString()}.
+
+What would you like to do now?
+1. Color Analysis & Shopping
+2. Virtual Try-On`;
+          
+          await storage.updateSession(session.id, {
+            currentState: "WELCOME",
+            lastInteraction: new Date(),
+            context: {
+              lastMessage: subscriptionMessage,
+              lastOptions: ["1", "2"]
+            }
+          });
+          
+          await sendWhatsAppMessage(phoneNumber, subscriptionMessage);
+        } else if (message === "2") {
+          // Return to main menu
+          await storage.updateSession(session.id, {
+            currentState: "WELCOME", 
+            lastInteraction: new Date(),
+            context: null
+          });
+          await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
+        } else {
+          await sendWhatsAppMessage(phoneNumber, "Please select option 1 to upgrade or 2 to return to the main menu.");
         }
         break;
 
