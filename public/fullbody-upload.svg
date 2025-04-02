@@ -1,0 +1,47 @@
+<svg width="300" height="200" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="#f3f4f6" />
+  
+  <!-- Phone outline -->
+  <rect x="50" y="20" width="80" height="160" rx="10" fill="#374151" />
+  <rect x="55" y="25" width="70" height="150" rx="8" fill="#f3f4f6" />
+  
+  <!-- Camera/photo screen -->
+  <rect x="60" y="30" width="60" height="120" rx="5" fill="#e5e7eb" />
+  
+  <!-- Camera button -->
+  <circle cx="90" cy="165" r="10" fill="#d1d5db" stroke="#9ca3af" stroke-width="2" />
+  <circle cx="90" cy="165" r="7" fill="#9ca3af" />
+  
+  <!-- Stick figure silhouette -->
+  <circle cx="90" cy="50" r="10" fill="#9ca3af" /> <!-- Head -->
+  <line x1="90" y1="60" x2="90" y2="110" stroke="#9ca3af" stroke-width="2" /> <!-- Body -->
+  <line x1="90" y1="75" x2="70" y2="90" stroke="#9ca3af" stroke-width="2" /> <!-- Left arm -->
+  <line x1="90" y1="75" x2="110" y2="90" stroke="#9ca3af" stroke-width="2" /> <!-- Right arm -->
+  <line x1="90" y1="110" x2="75" y2="140" stroke="#9ca3af" stroke-width="2" /> <!-- Left leg -->
+  <line x1="90" y1="110" x2="105" y2="140" stroke="#9ca3af" stroke-width="2" /> <!-- Right leg -->
+  
+  <!-- Virtual try-on process -->
+  <path d="M140,90 L170,90" stroke="#2563eb" stroke-width="2" stroke-dasharray="4" />
+  <polygon points="170,90 165,85 165,95" fill="#2563eb" />
+  
+  <!-- Shirt template -->
+  <rect x="180" y="40" width="40" height="60" rx="3" fill="#3b82f6" />
+  <path d="M180,50 L175,60 L175,90 L190,100 L210,90 L225,90 L225,60 L220,50 Z" fill="#3b82f6" />
+  
+  <!-- Processing arrow -->
+  <path d="M230,90 L260,90" stroke="#2563eb" stroke-width="2" stroke-dasharray="4" />
+  <polygon points="260,90 255,85 255,95" fill="#2563eb" />
+  
+  <!-- Full body with shirt result -->
+  <circle cx="270" cy="50" r="10" fill="#9ca3af" /> <!-- Head -->
+  <rect x="260" y="60" width="20" height="50" rx="3" fill="#3b82f6" /> <!-- Shirt on body -->
+  <line x1="260" y1="75" x2="245" y2="90" stroke="#9ca3af" stroke-width="2" /> <!-- Left arm -->
+  <line x1="280" y1="75" x2="295" y2="90" stroke="#9ca3af" stroke-width="2" /> <!-- Right arm -->
+  <line x1="270" y1="110" x2="255" y2="140" stroke="#9ca3af" stroke-width="2" /> <!-- Left leg -->
+  <line x1="270" y1="110" x2="285" y2="140" stroke="#9ca3af" stroke-width="2" /> <!-- Right leg -->
+  
+  <!-- Labels -->
+  <text x="90" y="180" font-family="Arial" font-size="10" fill="#111827" text-anchor="middle">Full Body Photo</text>
+  <text x="200" y="30" font-family="Arial" font-size="10" fill="#111827" text-anchor="middle">Shirt Style</text>
+  <text x="270" y="180" font-family="Arial" font-size="10" fill="#111827" text-anchor="middle">Virtual Try-On</text>
+</svg>

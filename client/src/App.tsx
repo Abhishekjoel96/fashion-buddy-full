@@ -4,11 +4,18 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
+import LandingPage from "@/pages/landing";
+import { PublicLayout } from "@/components/layouts/public-layout";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Dashboard}/>
+      <Route path="/" component={() => (
+        <PublicLayout>
+          <LandingPage />
+        </PublicLayout>
+      )} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route component={NotFound} />
     </Switch>
   );
