@@ -41,12 +41,26 @@ export function SiteHeader() {
           <Link href="#features" className="text-sm font-medium text-gray-300 hover:text-white">
             Features
           </Link>
-          <Link href="#howitworks" className="text-sm font-medium text-gray-300 hover:text-white">
+          <a 
+            href="#how-it-works" 
+            className="text-sm font-medium text-gray-300 hover:text-white"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
             How It Works
-          </Link>
-          <Link href="#pricing" className="text-sm font-medium text-gray-300 hover:text-white">
+          </a>
+          <a 
+            href="#pricing" 
+            className="text-sm font-medium text-gray-300 hover:text-white"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
             Pricing
-          </Link>
+          </a>
         </nav>
         <div className="hidden md:flex items-center gap-2">
           {user ? (
@@ -128,12 +142,28 @@ export function SiteHeader() {
               <Link href="#features" className="text-sm font-medium text-gray-300 hover:text-white py-2">
                 Features
               </Link>
-              <Link href="#howitworks" className="text-sm font-medium text-gray-300 hover:text-white py-2">
+              <a 
+                href="#how-it-works" 
+                className="text-sm font-medium text-gray-300 hover:text-white py-2"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setMobileMenuOpen(false);
+                  document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
                 How It Works
-              </Link>
-              <Link href="#pricing" className="text-sm font-medium text-gray-300 hover:text-white py-2">
+              </a>
+              <a 
+                href="#pricing" 
+                className="text-sm font-medium text-gray-300 hover:text-white py-2"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setMobileMenuOpen(false);
+                  document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
                 Pricing
-              </Link>
+              </a>
               <div className="mt-6 flex flex-col gap-3">
                 {user ? (
                   <>

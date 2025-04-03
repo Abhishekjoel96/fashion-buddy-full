@@ -196,7 +196,8 @@ export default function LandingPage() {
       
       {/* Hero section */}
       <section className="min-h-screen relative overflow-hidden bg-[#050505] flex items-center">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-50 z-0"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-indigo-900/20 via-purple-800/10 to-black opacity-50 z-0"></div>
+        <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-indigo-600/20 to-transparent z-0"></div>
         <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-5 z-0"></div>
 
         <div className="relative z-10 container mx-auto px-6 py-20">
@@ -659,19 +660,42 @@ export default function LandingPage() {
               <div>
                 <h4 className="text-white font-medium mb-4">Product</h4>
                 <ul className="space-y-2 text-sm text-gray-400">
-                  <li className="hover:text-primary cursor-pointer">Features</li>
-                  <li className="hover:text-primary cursor-pointer">How It Works</li>
-                  <li className="hover:text-primary cursor-pointer">Pricing</li>
+                  <li className="hover:text-primary cursor-pointer">
+                    <a 
+                      href="#features"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                    >
+                      Features
+                    </a>
+                  </li>
+                  <li className="hover:text-primary cursor-pointer">
+                    <a 
+                      href="#how-it-works"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                    >
+                      How It Works
+                    </a>
+                  </li>
+                  <li className="hover:text-primary cursor-pointer">
+                    <a 
+                      href="#pricing"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                    >
+                      Pricing
+                    </a>
+                  </li>
                 </ul>
               </div>
-              <div>
-                <h4 className="text-white font-medium mb-4">Company</h4>
-                <ul className="space-y-2 text-sm text-gray-400">
-                  <li className="hover:text-primary cursor-pointer">About Us</li>
-                  <li className="hover:text-primary cursor-pointer">Contact</li>
-                  <li className="hover:text-primary cursor-pointer">Careers</li>
-                </ul>
-              </div>
+
               <div>
                 <h4 className="text-white font-medium mb-4">Legal</h4>
                 <ul className="space-y-2 text-sm text-gray-400">
