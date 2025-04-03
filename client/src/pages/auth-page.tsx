@@ -159,6 +159,11 @@ export default function AuthPage() {
                     </form>
                   </Form>
                 </CardContent>
+                <CardFooter className="flex justify-center">
+                  <Button variant="link" asChild className="text-sm text-gray-400 hover:text-blue-400">
+                    <a href="/reset-password">Forgot your password?</a>
+                  </Button>
+                </CardFooter>
               </Card>
             </TabsContent>
             
