@@ -331,7 +331,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features section */}
-      <ParallaxSection className="py-32 bg-black">
+      <ParallaxSection id="features" className="py-32 bg-black">
         <div className="container mx-auto px-6">
           <div className="max-w-3xl mx-auto text-center mb-16">
             <p className="text-sm font-medium text-primary mb-2">FEATURES</p>
@@ -584,7 +584,7 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing section */}
-      <section className="py-32 bg-black">
+      <section id="pricing" className="py-32 bg-black">
         <div className="container mx-auto px-6">
           <div className="max-w-3xl mx-auto text-center mb-16">
             <p className="text-sm font-medium text-primary mb-2">PRICING</p>
