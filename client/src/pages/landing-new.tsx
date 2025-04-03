@@ -227,8 +227,11 @@ export default function LandingPage() {
                     size="lg" 
                     variant="outline" 
                     className="text-white border-gray-700 hover:bg-gray-900 px-8 py-6"
+                    onClick={() => {
+                      document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
                   >
-                    <Link href="#how-it-works">How it Works</Link>
+                    How it Works
                   </Button>
                 </div>
 
@@ -656,7 +659,7 @@ export default function LandingPage() {
               </p>
             </div>
             
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-10 text-center md:text-left">
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-10 text-center md:text-left">
               <div>
                 <h4 className="text-white font-medium mb-4">Product</h4>
                 <ul className="space-y-2 text-sm text-gray-400">
@@ -696,14 +699,7 @@ export default function LandingPage() {
                 </ul>
               </div>
 
-              <div>
-                <h4 className="text-white font-medium mb-4">Legal</h4>
-                <ul className="space-y-2 text-sm text-gray-400">
-                  <li className="hover:text-primary cursor-pointer">Privacy Policy</li>
-                  <li className="hover:text-primary cursor-pointer">Terms of Service</li>
-                  <li className="hover:text-primary cursor-pointer">Refund Policy</li>
-                </ul>
-              </div>
+
             </div>
           </div>
           

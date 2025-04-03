@@ -38,9 +38,16 @@ export function SiteHeader() {
           </Link>
         </div>
         <nav className="hidden md:flex items-center gap-6">
-          <Link href="#features" className="text-sm font-medium text-gray-300 hover:text-white">
+          <a 
+            href="#features" 
+            className="text-sm font-medium text-gray-300 hover:text-white"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
             Features
-          </Link>
+          </a>
           <a 
             href="#how-it-works" 
             className="text-sm font-medium text-gray-300 hover:text-white"
@@ -139,9 +146,17 @@ export function SiteHeader() {
               </button>
             </div>
             <nav className="flex flex-col gap-4">
-              <Link href="#features" className="text-sm font-medium text-gray-300 hover:text-white py-2">
+              <a 
+                href="#features" 
+                className="text-sm font-medium text-gray-300 hover:text-white py-2"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setMobileMenuOpen(false);
+                  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
                 Features
-              </Link>
+              </a>
               <a 
                 href="#how-it-works" 
                 className="text-sm font-medium text-gray-300 hover:text-white py-2"
