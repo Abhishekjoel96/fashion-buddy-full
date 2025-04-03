@@ -435,7 +435,7 @@ export default function LandingPage() {
                   <div className="relative bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
                     <div className="relative aspect-[3/4] bg-gray-800">
                       <img 
-                        src="/selfie-upload.svg" 
+                        src="/images/skin-analysis.jpeg" 
                         alt="Skin tone analysis demo" 
                         className="absolute inset-0 w-full h-full object-cover"
                       />
@@ -498,7 +498,7 @@ export default function LandingPage() {
                   <div className="relative bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
                     <div className="relative aspect-video bg-gray-800">
                       <img 
-                        src="/virtual-tryon.svg" 
+                        src="/images/virtual-tryon.jpeg" 
                         alt="Virtual try-on demo" 
                         className="absolute inset-0 w-full h-full object-cover"
                       />
@@ -542,12 +542,12 @@ export default function LandingPage() {
                 <p className="text-sm text-gray-400 mb-6">
                   Take a selfie or full-body photo. Our AI will analyze your features.
                 </p>
-                <div className="aspect-square bg-gray-800 rounded-lg mb-4 flex items-center justify-center text-gray-600">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 8C13.1046 8 14 7.10457 14 6C14 4.89543 13.1046 4 12 4C10.8954 4 10 4.89543 10 6C10 7.10457 10.8954 8 12 8Z" fill="currentColor"/>
-                    <path d="M21 14V19C21 19.5523 20.5523 20 20 20H4C3.44772 20 3 19.5523 3 19V14" stroke="currentColor" strokeWidth="2"/>
-                    <path d="M12 8V16M12 16L9 13M12 16L15 13" stroke="currentColor" strokeWidth="2"/>
-                  </svg>
+                <div className="aspect-square bg-gray-800 rounded-lg mb-4 overflow-hidden">
+                  <img 
+                    src="/images/skin-analysis.jpeg" 
+                    alt="Send a photo" 
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               </div>
               
@@ -572,10 +572,12 @@ export default function LandingPage() {
                 <p className="text-sm text-gray-400 mb-6">
                   Get direct links to clothing items from popular Indian e-commerce platforms.
                 </p>
-                <div className="aspect-square bg-gray-800 rounded-lg mb-4 flex items-center justify-center text-gray-600">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M16 11V7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7V11M5 9H19L20 21H4L5 9Z" stroke="currentColor" strokeWidth="2"/>
-                  </svg>
+                <div className="aspect-square bg-gray-800 rounded-lg mb-4 overflow-hidden">
+                  <img 
+                    src="/images/shopping.jpeg" 
+                    alt="Shop with confidence" 
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               </div>
             </div>
