@@ -13,6 +13,41 @@ What would you like to do today?
 2. Virtual Try-On
 3. End Chat`;
 
+const ONBOARDING_MESSAGE = `👋 Welcome to Fashion Buddy! I'm your AI fashion assistant.
+
+Here's how I can help you:
+• Analyze your skin tone to find perfect color matches
+• Show how clothes would look on you with virtual try-on
+• Find shopping recommendations from top Indian stores
+
+Let's get started with a quick guide:
+
+1. Continue with Onboarding
+2. Skip to Main Menu`;
+
+const FEATURES_EXPLANATION = `🌈 *Color Analysis*
+Send me a selfie, and I'll analyze your skin tone to suggest colors that complement you perfectly!
+• Free tier: 1 analysis/month, 3 recommended colors
+• Premium tier: 10 analyses/month, 5 recommended colors + colors to avoid
+
+👕 *Virtual Try-On*
+Send a full-body photo and a garment image to see how clothes look on you without physically trying them on.
+• Free tier: 1 try-on/month
+• Premium tier: 10 try-ons/month, priority processing
+
+🛍️ *Shopping Recommendations*
+I'll find clothing items from Indian stores like Myntra and Flipkart that match your skin tone and preferences.
+• Free tier: Limited catalog access
+• Premium tier: Full catalog access, priority support
+
+💎 *Premium Subscription*
+Upgrade to Premium for just ₹129/month to unlock all features!
+
+Choose an option:
+1. Start with Color Analysis
+2. Try Virtual Try-On
+3. Return to Main Menu`;
+
 export async function handleIncomingMessage(
   from: string,
   message: string,
@@ -54,17 +89,114 @@ export async function handleIncomingMessage(
     let session = await storage.getSession(user.id);
 
     if (!session) {
+      // First-time user - start with onboarding flow
       session = await storage.createSession({
         userId: user.id,
-        currentState: "WELCOME",
+        currentState: "ONBOARDING",
         lastInteraction: new Date(),
-        context: null
+        context: {
+          isNewUser: true,
+          subscriptionTier: user.subscriptionTier
+        }
       });
-      await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
+      await sendWhatsAppMessage(phoneNumber, ONBOARDING_MESSAGE);
       return;
     }
 
     switch (session.currentState) {
+      case "ONBOARDING":
+        if (message === "1") {
+          // Continue with onboarding flow
+          await storage.updateSession(session.id, {
+            currentState: "FEATURES_EXPLANATION",
+            lastInteraction: new Date(),
+            context: null
+          });
+          await sendWhatsAppMessage(phoneNumber, FEATURES_EXPLANATION);
+        } else if (message === "2") {
+          // Skip to main menu
+          await storage.updateSession(session.id, {
+            currentState: "WELCOME",
+            lastInteraction: new Date(),
+            context: null
+          });
+          await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
+        } else {
+          await sendWhatsAppMessage(
+            phoneNumber,
+            "Please select a valid option (1 or 2)."
+          );
+        }
+        break;
+        
+      case "FEATURES_EXPLANATION":
+        if (message === "1") {
+          // Go to color analysis
+          const nextMessage = "Please send me a clear, well-lit selfie photo so I can analyze your skin tone and recommend suitable colors.";
+          await storage.updateSession(session.id, {
+            currentState: "AWAITING_PHOTO",
+            lastInteraction: new Date(),
+            context: null
+          });
+          await sendWhatsAppMessage(phoneNumber, nextMessage);
+        } else if (message === "2") {
+          // Go to virtual try-on
+          const nextMessage = "For virtual try-on, I'll need two pictures:\n1. A full-body photo of yourself\n2. The garment/shirt you want to try on\n\nPlease send your full-body photo first.";
+          await storage.updateSession(session.id, {
+            currentState: "AWAITING_FULLBODY",
+            lastInteraction: new Date(),
+            context: null
+          });
+          await sendWhatsAppMessage(phoneNumber, nextMessage);
+        } else if (message === "3") {
+          // Go to main menu
+          await storage.updateSession(session.id, {
+            currentState: "WELCOME",
+            lastInteraction: new Date(),
+            context: null
+          });
+          await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
+        } else {
+          await sendWhatsAppMessage(
+            phoneNumber,
+            "Please select a valid option (1, 2, or 3)."
+          );
+        }
+        break;
+        
+      case "SUBSCRIPTION_PROMPT":
+        if (message === "1") {
+          // Handle upgrade request
+          const upgradeResponse = `Thank you for your interest in upgrading to Premium! 
+          
+To complete the upgrade process, please go to our website dashboard and select the Premium plan option. You'll be able to make the payment securely there.
+
+In the meantime, I'll return you to the main menu.`;
+          
+          await storage.updateSession(session.id, {
+            currentState: "WELCOME",
+            lastInteraction: new Date(),
+            context: null
+          });
+          
+          await sendWhatsAppMessage(phoneNumber, upgradeResponse);
+          await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
+        } else if (message === "2") {
+          // Return to main menu
+          await storage.updateSession(session.id, {
+            currentState: "WELCOME",
+            lastInteraction: new Date(),
+            context: null
+          });
+          await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
+        } else {
+          await sendWhatsAppMessage(
+            phoneNumber,
+            "Please select a valid option (1 or 2)."
+          );
+        }
+        break;
+        
       case "WELCOME":
         if (message === "1") {
           const nextMessage = "Please send me a clear, well-lit selfie photo so I can analyze your skin tone and recommend suitable colors.";
@@ -434,35 +566,102 @@ Would you like to upgrade to Premium for ₹129/month and enjoy:
             throw new Error("Full body image not found");
           }
 
+          // Send process update message
+          await sendWhatsAppMessage(phoneNumber, "🔄 Processing your virtual try-on request. This may take up to 30 seconds...");
+          
           // Send Cloudinary URLs to Fashion API
-          const tryOnResult = await virtualTryOn(fullBodyImage, uploadResult.imageUrl);
-
-          if (tryOnResult.success) {
-            // Increment virtual try-on count
-            await storage.incrementVirtualTryOnCount(user.id);
+          try {
+            const tryOnResult = await virtualTryOn(fullBodyImage, uploadResult.imageUrl);
             
-            const tryOnResponse = `Here's how the garment would look on you!\n${tryOnResult.resultImageUrl}\n\nWould you like to:\n1. Try another garment\n2. Return to main menu`;
-
-            await storage.updateSession(session.id, {
-              currentState: "SHOWING_TRYON",
-              lastInteraction: new Date(),
-              context: {
-                fullBodyImage,
-                garmentImage: uploadResult.imageUrl,
-                resultImage: tryOnResult.resultImageUrl
+            if (tryOnResult.success) {
+              // Increment virtual try-on count
+              await storage.incrementVirtualTryOnCount(user.id);
+              
+              const tryOnResponse = `✨ Here's how the garment would look on you!\n${tryOnResult.resultImageUrl}\n\nWould you like to:\n1. Try another garment\n2. Return to main menu`;
+  
+              await storage.updateSession(session.id, {
+                currentState: "SHOWING_TRYON",
+                lastInteraction: new Date(),
+                context: {
+                  fullBodyImage,
+                  garmentImage: uploadResult.imageUrl,
+                  resultImage: tryOnResult.resultImageUrl
+                }
+              });
+  
+              await sendWhatsAppMessage(phoneNumber, tryOnResponse);
+            } else {
+              // Handle API error with specific feedback
+              let errorMessage = "Sorry, I couldn't process the virtual try-on.";
+              
+              if (tryOnResult.error) {
+                if (tryOnResult.error.includes("timeout")) {
+                  errorMessage = "The process took too long to complete. This might be due to high demand. Please try again in a few minutes.";
+                } else if (tryOnResult.error.includes("image") || tryOnResult.error.includes("detect")) {
+                  errorMessage = "I had trouble processing the images. Please make sure:\n- Your full-body photo shows your entire body clearly\n- The garment photo shows the clothing item clearly on a simple background\n- Both images have good lighting and resolution";
+                } else {
+                  errorMessage = `There was an issue with the virtual try-on: ${tryOnResult.error}`;
+                }
               }
+              
+              await sendWhatsAppMessage(phoneNumber, errorMessage);
+              await sendWhatsAppMessage(phoneNumber, "Would you like to:\n1. Try again with different images\n2. Return to main menu");
+              
+              await storage.updateSession(session.id, {
+                currentState: "VIRTUAL_TRYON_ERROR",
+                lastInteraction: new Date(),
+                context: {
+                  fullBodyImage,
+                  lastOptions: ["1", "2"]
+                }
+              });
+            }
+          } catch (error) {
+            console.error("Error processing virtual try-on:", error);
+            await sendWhatsAppMessage(phoneNumber, "Sorry, I couldn't process the virtual try-on due to a technical issue. Please try again later.");
+            
+            // Return to welcome state on error
+            await storage.updateSession(session.id, {
+              currentState: "WELCOME",
+              lastInteraction: new Date(),
+              context: null
             });
-
-            await sendWhatsAppMessage(phoneNumber, tryOnResponse);
-          } else {
-            throw new Error(tryOnResult.error || "Virtual try-on failed");
+            await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
           }
         } catch (error) {
-          console.error("Error processing virtual try-on:", error);
-          await sendWhatsAppMessage(phoneNumber, "Sorry, I couldn't process the virtual try-on. Please try again with different images.");
+          console.error("Error uploading garment image:", error);
+          await sendWhatsAppMessage(phoneNumber, "Sorry, I couldn't process the garment image. Please try sending it again.");
         }
         break;
 
+      case "VIRTUAL_TRYON_ERROR":
+        if (message === "1") {
+          // Try again with different images, but keep the full body photo
+          const retryMessage = "Let's try again! Please send another garment photo to try on.";
+          await storage.updateSession(session.id, {
+            currentState: "AWAITING_GARMENT",
+            lastInteraction: new Date(),
+            context: {
+              fullBodyImage: session.context?.fullBodyImage
+            }
+          });
+          await sendWhatsAppMessage(phoneNumber, retryMessage);
+        } else if (message === "2") {
+          // Return to main menu
+          await storage.updateSession(session.id, {
+            currentState: "WELCOME",
+            lastInteraction: new Date(),
+            context: null
+          });
+          await sendWhatsAppMessage(phoneNumber, WELCOME_MESSAGE);
+        } else {
+          await sendWhatsAppMessage(
+            phoneNumber,
+            "Please select a valid option (1 or 2)."
+          );
+        }
+        break;
+        
       case "SHOWING_TRYON":
         if (message === "1") {
           // Check if user has reached their virtual try-on limit

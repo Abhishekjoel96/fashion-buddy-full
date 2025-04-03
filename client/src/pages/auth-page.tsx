@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useAuth } from "@/hooks/use-auth";
 import { Redirect } from "wouter";
 import { Loader2 } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 // Form schemas
 const loginSchema = z.object({
@@ -27,6 +28,9 @@ const registerSchema = z.object({
     }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   confirmPassword: z.string(),
+  subscriptionTier: z.enum(["free", "premium"], {
+    required_error: "Please select a subscription plan",
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
@@ -53,6 +57,7 @@ export default function AuthPage() {
       phoneNumber: "",
       password: "",
       confirmPassword: "",
+      subscriptionTier: "free",
     },
   });
 
@@ -255,6 +260,59 @@ export default function AuthPage() {
                                 className="bg-gray-800 border-gray-700 text-white" 
                                 {...field} 
                               />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={registerForm.control}
+                        name="subscriptionTier"
+                        render={({ field }) => (
+                          <FormItem className="space-y-3">
+                            <FormLabel className="text-gray-200">Choose Subscription Plan</FormLabel>
+                            <FormControl>
+                              <RadioGroup
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                className="flex flex-col space-y-3"
+                              >
+                                <FormItem className="flex items-center space-x-3 space-y-0">
+                                  <FormControl>
+                                    <RadioGroupItem value="free" id="free" />
+                                  </FormControl>
+                                  <Label 
+                                    htmlFor="free" 
+                                    className="text-gray-200 font-medium flex flex-col"
+                                  >
+                                    <span>Free Plan</span>
+                                    <span className="text-xs text-gray-400 mt-1">
+                                      1 color analysis/month, 3 complementary colors, 1 try-on, 2 shirt options
+                                    </span>
+                                  </Label>
+                                </FormItem>
+                                
+                                <FormItem className="flex items-center space-x-3 space-y-0">
+                                  <FormControl>
+                                    <RadioGroupItem value="premium" id="premium" />
+                                  </FormControl>
+                                  <Label 
+                                    htmlFor="premium" 
+                                    className="text-gray-200 font-medium flex flex-col"
+                                  >
+                                    <span className="flex items-center">
+                                      Premium Plan
+                                      <span className="ml-2 px-2 py-0.5 bg-gradient-to-r from-amber-500 to-amber-700 text-white text-xs rounded-full">
+                                        ₹129/month
+                                      </span>
+                                    </span>
+                                    <span className="text-xs text-gray-400 mt-1">
+                                      10 analyses, 5 colors + colors to avoid, 10 try-ons, full catalog access
+                                    </span>
+                                  </Label>
+                                </FormItem>
+                              </RadioGroup>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
