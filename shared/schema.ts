@@ -48,6 +48,8 @@ export const sessions = pgTable("sessions", {
     currentPage?: number;
     budget?: string;
     resultImage?: string;
+    isNewUser?: boolean;
+    subscriptionTier?: string;
   }>(),
 });
 

@@ -52,34 +52,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await sendWhatsAppMessage(user.phoneNumber, upgradeMessage);
       }
 
-      // Send welcome message with user's name
-      const welcomeMessage = `Hello ${user.name}! 👋 Welcome to WhatsApp Fashion Buddy! 
-I can help you find clothes that match your skin tone or try on clothes virtually. 
-What would you like to do today?
+      // Send onboarding message for first-time users
+      const onboardingMessage = `Hello ${user.name}! 👋 Welcome to WhatsApp Fashion Buddy! 
 
-1. Color Analysis & Shopping Recommendations
-2. Virtual Try-On
-3. End Chat`;
+I'm your AI fashion assistant, and I'm here to help you look your best.
 
-      await sendWhatsAppMessage(user.phoneNumber, welcomeMessage);
+Let's get started with a quick guide:
+
+1. Continue with Onboarding
+2. Skip to Main Menu`;
+
+      await sendWhatsAppMessage(user.phoneNumber, onboardingMessage);
 
       // Create new session
       const session = await storage.createSession({
         userId: user.id,
-        currentState: "WELCOME",
+        currentState: "ONBOARDING",
         lastInteraction: new Date(),
         context: {
-          subscriptionTier: user.subscriptionTier,
-          colorAnalysisCount: user.colorAnalysisCount,
-          virtualTryOnCount: user.virtualTryOnCount
+          lastMessage: onboardingMessage,
+          lastOptions: ["1", "2"]
         }
       });
 
-      // Store welcome message in conversations
+      // Store onboarding message in conversations
       await storage.createConversation({
         userId: user.id,
         sessionId: session.id,
-        message: welcomeMessage,
+        message: onboardingMessage,
         messageType: 'system'
       });
 
@@ -130,7 +130,7 @@ What would you like to do today?
         allParams: req.body
       });
 
-      await handleIncomingMessage(From, Body, MediaUrl0, req);
+      await handleIncomingMessage(From, Body, MediaUrl0);
 
       // Send TwiML response
       res.set('Content-Type', 'text/xml');
