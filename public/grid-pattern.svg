@@ -1,8 +1,39 @@
-<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-      <path fill="none" stroke="white" stroke-width="0.5" d="M20 0L0 0 0 20" />
-    </pattern>
-  </defs>
-  <rect width="100%" height="100%" fill="url(#grid)" />
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100" height="100" fill="#040404"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M0 10H100V11H0V10Z" fill="white" fill-opacity="0.05"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M0 30H100V31H0V30Z" fill="white" fill-opacity="0.05"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M0 50H100V51H0V50Z" fill="white" fill-opacity="0.05"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M0 70H100V71H0V70Z" fill="white" fill-opacity="0.05"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M0 90H100V91H0V90Z" fill="white" fill-opacity="0.05"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M10 0V100H11V0H10Z" fill="white" fill-opacity="0.05"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M30 0V100H31V0H30Z" fill="white" fill-opacity="0.05"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M50 0V100H51V0H50Z" fill="white" fill-opacity="0.05"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M70 0V100H71V0H70Z" fill="white" fill-opacity="0.05"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M90 0V100H91V0H90Z" fill="white" fill-opacity="0.05"/>
+  <circle cx="10" cy="10" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="30" cy="10" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="50" cy="10" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="70" cy="10" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="90" cy="10" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="10" cy="30" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="30" cy="30" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="50" cy="30" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="70" cy="30" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="90" cy="30" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="10" cy="50" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="30" cy="50" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="50" cy="50" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="70" cy="50" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="90" cy="50" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="10" cy="70" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="30" cy="70" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="50" cy="70" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="70" cy="70" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="90" cy="70" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="10" cy="90" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="30" cy="90" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="50" cy="90" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="70" cy="90" r="1" fill="white" fill-opacity="0.2"/>
+  <circle cx="90" cy="90" r="1" fill="white" fill-opacity="0.2"/>
 </svg>

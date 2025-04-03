@@ -1,43 +1,44 @@
-<svg width="300" height="200" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100%" height="100%" fill="#f3f4f6" />
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="500" viewBox="0 0 400 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="500" fill="#1E1E1E"/>
   
-  <!-- Phone outline -->
-  <rect x="110" y="20" width="80" height="160" rx="10" fill="#374151" />
-  <rect x="115" y="25" width="70" height="150" rx="8" fill="#f3f4f6" />
+  <!-- Person silhouette -->
+  <path d="M200 150C233.137 150 260 123.137 260 90C260 56.8629 233.137 30 200 30C166.863 30 140 56.8629 140 90C140 123.137 166.863 150 200 150Z" fill="#374151"/>
+  <path d="M120 300V280C120 235.817 155.817 200 200 200C244.183 200 280 235.817 280 280V300" stroke="#374151" stroke-width="10"/>
   
-  <!-- Selfie screen -->
-  <rect x="120" y="30" width="60" height="100" rx="5" fill="#e5e7eb" />
+  <!-- Phone frame -->
+  <rect x="80" y="80" width="240" height="340" rx="20" stroke="#6366F1" stroke-width="10"/>
   
-  <!-- Face outline -->
-  <circle cx="150" cy="80" r="25" fill="#d1d5db" stroke="#9ca3af" stroke-width="2" />
-  <circle cx="142" cy="73" r="3" fill="#4b5563" /> <!-- Left eye -->
-  <circle cx="158" cy="73" r="3" fill="#4b5563" /> <!-- Right eye -->
-  <path d="M142,90 C145,95 155,95 158,90" fill="none" stroke="#4b5563" stroke-width="2" /> <!-- Smile -->
+  <!-- Camera -->
+  <circle cx="200" cy="115" r="50" fill="#111827"/>
+  <circle cx="200" cy="115" r="40" fill="#1F2937"/>
+  <circle cx="200" cy="115" r="30" fill="#111827"/>
+  <circle cx="200" cy="115" r="15" fill="#4B5563"/>
+  <circle cx="195" cy="110" r="5" fill="white" fill-opacity="0.5"/>
   
-  <!-- Camera button -->
-  <circle cx="150" cy="145" r="10" fill="#d1d5db" stroke="#9ca3af" stroke-width="2" />
-  <circle cx="150" cy="145" r="7" fill="#9ca3af" />
+  <!-- Flash -->
+  <circle cx="240" cy="115" r="10" fill="#FBBF24"/>
   
-  <!-- Arrow pointing to selfie -->
-  <path d="M50,80 L105,80" stroke="#2563eb" stroke-width="2" stroke-dasharray="4" />
-  <polygon points="105,80 100,75 100,85" fill="#2563eb" />
+  <!-- Target focus lines -->
+  <rect x="130" y="140" width="140" height="140" rx="5" stroke="#6366F1" stroke-width="2" stroke-dasharray="5 5"/>
+  <line x1="130" y1="210" x2="270" y2="210" stroke="#6366F1" stroke-width="2" stroke-dasharray="5 5"/>
+  <line x1="200" y1="140" x2="200" y2="280" stroke="#6366F1" stroke-width="2" stroke-dasharray="5 5"/>
+  
+  <!-- Capture button -->
+  <circle cx="200" cy="370" r="25" fill="#4B5563"/>
+  <circle cx="200" cy="370" r="20" fill="#6366F1"/>
+  
+  <!-- Facial recognition points -->
+  <circle cx="180" cy="95" r="3" fill="#6366F1"/>
+  <circle cx="220" cy="95" r="3" fill="#6366F1"/>
+  <circle cx="200" cy="130" r="3" fill="#6366F1"/>
+  <circle cx="185" cy="115" r="3" fill="#6366F1"/>
+  <circle cx="215" cy="115" r="3" fill="#6366F1"/>
+  <circle cx="175" cy="85" r="3" fill="#6366F1"/>
+  <circle cx="225" cy="85" r="3" fill="#6366F1"/>
   
   <!-- Text -->
-  <text x="50" y="65" font-family="Arial" font-size="12" fill="#111827" text-anchor="middle">Upload</text>
-  <text x="50" y="80" font-family="Arial" font-size="12" fill="#111827" text-anchor="middle">Your</text>
-  <text x="50" y="95" font-family="Arial" font-size="12" fill="#111827" text-anchor="middle">Selfie</text>
-  
-  <!-- Color analysis result -->
-  <rect x="200" y="55" width="60" height="15" rx="3" fill="#ef4444" /> <!-- Red -->
-  <rect x="200" y="75" width="60" height="15" rx="3" fill="#3b82f6" /> <!-- Blue -->
-  <rect x="200" y="95" width="60" height="15" rx="3" fill="#10b981" /> <!-- Green -->
-  
-  <!-- Arrow pointing to color results -->
-  <path d="M170,80 L190,80" stroke="#2563eb" stroke-width="2" stroke-dasharray="4" />
-  <polygon points="190,80 185,75 185,85" fill="#2563eb" />
-  
-  <!-- Text -->
-  <text x="250" y="40" font-family="Arial" font-size="12" fill="#111827" text-anchor="middle">Your</text>
-  <text x="250" y="55" font-family="Arial" font-size="12" fill="#111827" text-anchor="middle">Perfect</text>
-  <text x="250" y="70" font-family="Arial" font-size="12" fill="#111827" text-anchor="middle">Colors</text>
+  <text x="200" y="320" font-family="Arial" font-size="14" fill="white" text-anchor="middle">Take a clear selfie in natural light</text>
+  <text x="200" y="340" font-family="Arial" font-size="14" fill="#6366F1" text-anchor="middle">for accurate color analysis</text>
 </svg>
