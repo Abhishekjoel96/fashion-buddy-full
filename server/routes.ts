@@ -52,26 +52,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await sendWhatsAppMessage(user.phoneNumber, upgradeMessage);
       }
 
-      // Send onboarding message for first-time users
+      // Send welcome message when chat is triggered from dashboard
       const onboardingMessage = `Hello ${user.name}! 👋 Welcome to WhatsApp Fashion Buddy! 
+I can help you find clothes that match your skin tone or try on clothes virtually. 
+What would you like to do today?
 
-I'm your AI fashion assistant, and I'm here to help you look your best.
-
-Let's get started with a quick guide:
-
-1. Continue with Onboarding
-2. Skip to Main Menu`;
+1. Color Analysis & Shopping Recommendations
+2. Virtual Try-On
+3. End Chat`;
 
       await sendWhatsAppMessage(user.phoneNumber, onboardingMessage);
 
       // Create new session
       const session = await storage.createSession({
         userId: user.id,
-        currentState: "ONBOARDING",
+        currentState: "WELCOME",
         lastInteraction: new Date(),
         context: {
           lastMessage: onboardingMessage,
-          lastOptions: ["1", "2"]
+          lastOptions: ["1", "2", "3"]
         }
       });
 
