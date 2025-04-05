@@ -260,8 +260,23 @@ Would you like to upgrade to Premium for ₹129/month and enjoy:
             return;
           }
 
-          // Now we analyze the photo after receiving it
-          analysis = await analyzeSkinTone("", mediaUrl); // Use mediaUrl here
+          console.log("Processing skin tone analysis from media URL:", mediaUrl);
+          
+          // First upload the image to Cloudinary to get a more accessible URL
+          const uploadResult = await uploadImageToCloudinary(mediaUrl, user.id, 'skin_tone');
+          console.log("Uploaded image to Cloudinary:", uploadResult.imageUrl);
+          
+          // Store image info in database
+          await storage.createUserImage({
+            userId: user.id,
+            imageUrl: uploadResult.imageUrl,
+            cloudinaryPublicId: uploadResult.publicId,
+            imageType: 'skin_tone'
+          });
+          
+          // Analyze the photo using Cloudinary URL for better reliability
+          analysis = await analyzeSkinTone("", uploadResult.imageUrl);
+          console.log("Skin tone analysis completed:", analysis);
           
           // Increment the color analysis count
           await storage.incrementColorAnalysisCount(user.id);

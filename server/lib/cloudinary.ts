@@ -22,7 +22,7 @@ export interface CloudinaryUploadResult {
 export async function uploadImageToCloudinary(
   mediaUrl: string,
   userId: number,
-  imageType: 'selfie' | 'full_body' | 'garment'
+  imageType: 'selfie' | 'full_body' | 'garment' | 'skin_tone'
 ): Promise<CloudinaryUploadResult> {
   try {
     // Log the upload attempt

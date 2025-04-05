@@ -2,6 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { validateTwilioRequest, sendWhatsAppMessage } from "./lib/twilio";
 import { handleIncomingMessage } from "./lib/messageHandler";
+import { uploadImageToCloudinary } from "./lib/cloudinary";
+import { analyzeSkinTone } from "./lib/openai";
+import { handleFashionApiWebhook } from "./lib/fashionApi";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 
@@ -114,6 +117,44 @@ What would you like to do today?
     } catch (error) {
       console.error("Test WhatsApp error:", error);
       res.status(500).json({ error: "Failed to simulate WhatsApp message" });
+    }
+  });
+  
+  // Debugging endpoint for direct color analysis testing
+  app.post("/api/test-color-analysis", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const user = req.user;
+      const { mediaUrl } = req.body;
+      
+      if (!mediaUrl) {
+        return res.status(400).json({ error: "Media URL is required" });
+      }
+      
+      console.log("Testing color analysis for user:", user.id, "with media:", mediaUrl);
+      
+      // Upload to Cloudinary first
+      const uploadResult = await uploadImageToCloudinary(mediaUrl, user.id, 'skin_tone');
+      
+      // Analyze the photo
+      const analysis = await analyzeSkinTone("", uploadResult.imageUrl);
+      
+      // Return the analysis result directly
+      res.json({
+        success: true,
+        analysis,
+        imageUrl: uploadResult.imageUrl
+      });
+      
+    } catch (error) {
+      console.error("Test color analysis error:", error);
+      res.status(500).json({ 
+        error: "Failed to perform color analysis test",
+        message: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
