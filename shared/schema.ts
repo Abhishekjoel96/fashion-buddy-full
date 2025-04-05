@@ -28,7 +28,7 @@ export const userImages = pgTable("user_images", {
   userId: integer("user_id").notNull(),
   imageUrl: text("image_url").notNull(),
   cloudinaryPublicId: text("cloudinary_public_id").notNull(),
-  imageType: text("image_type").notNull(), // 'selfie' or 'full_body' or 'garment'
+  imageType: text("image_type").notNull(), // 'selfie', 'full_body', 'garment', or 'skin_tone'
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

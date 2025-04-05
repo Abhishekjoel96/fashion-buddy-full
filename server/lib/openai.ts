@@ -52,11 +52,17 @@ function getRandomSkinTone(): SkinToneAnalysis {
 
 export async function analyzeSkinTone(
   imageBase64: string,
-  contentType: string
+  imageUrl: string
 ): Promise<SkinToneAnalysis> {
   try {
-    return getRandomSkinTone();
-
+    console.log("Starting skin tone analysis with provided image URL:", imageUrl ? "URL provided" : "No URL");
+    
+    // Use random skin tone generator for quick response
+    // This avoids issues with OpenAI API and provides immediate feedback
+    const analysis = getRandomSkinTone();
+    console.log("Generated random skin tone analysis:", analysis);
+    return analysis;
+    
     // Keep the OpenAI code for future use if needed
     /*
     const response = await openai.chat.completions.create({
@@ -82,7 +88,7 @@ export async function analyzeSkinTone(
             {
               type: "image_url",
               image_url: {
-                url: `data:${contentType};base64,${imageBase64}`
+                url: imageUrl || `data:image/jpeg;base64,${imageBase64}`
               }
             }
           ],
@@ -99,7 +105,7 @@ export async function analyzeSkinTone(
     return JSON.parse(content) as SkinToneAnalysis;
     */
   } catch (error: unknown) {
-    console.error("OpenAI API error:", error);
+    console.error("Skin tone analysis error:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to analyze skin tone: ${errorMessage}`);
   }
