@@ -199,6 +199,13 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-indigo-900/20 via-purple-800/10 to-black opacity-50 z-0"></div>
         <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-indigo-600/20 to-transparent z-0"></div>
         <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-5 z-0"></div>
+        <div className="absolute inset-0 opacity-10 z-0">
+          <img 
+            src="/images/fashion-hero.jpeg" 
+            alt="Fashion background" 
+            className="w-full h-full object-cover object-center"
+          />
+        </div>
 
         <div className="relative z-10 container mx-auto px-6 py-20">
           <div className="max-w-6xl mx-auto">
@@ -435,7 +442,7 @@ export default function LandingPage() {
                   <div className="relative bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
                     <div className="relative aspect-[3/4] bg-gray-800">
                       <img 
-                        src="/skin-analysis.jpeg" 
+                        src="/images/skin-tone-analysis.jpeg" 
                         alt="Skin tone analysis demo" 
                         className="absolute inset-0 w-full h-full object-cover"
                       />
@@ -498,7 +505,7 @@ export default function LandingPage() {
                   <div className="relative bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
                     <div className="relative aspect-video bg-gray-800">
                       <img 
-                        src="/virtual-tryon.jpeg" 
+                        src="/images/virtual-tryon.jpeg" 
                         alt="Virtual try-on demo" 
                         className="absolute inset-0 w-full h-full object-cover"
                       />
@@ -544,7 +551,7 @@ export default function LandingPage() {
                 </p>
                 <div className="aspect-square bg-gray-800 rounded-lg mb-4 overflow-hidden">
                   <img 
-                    src="/skin-analysis.jpeg" 
+                    src="/images/step1-selfie.jpeg" 
                     alt="Send a photo" 
                     className="w-full h-full object-cover"
                   />
@@ -574,7 +581,7 @@ export default function LandingPage() {
                 </p>
                 <div className="aspect-square bg-gray-800 rounded-lg mb-4 overflow-hidden">
                   <img 
-                    src="/shopping.jpeg" 
+                    src="/images/product-recommendations.jpeg" 
                     alt="Shop with confidence" 
                     className="w-full h-full object-cover"
                   />
