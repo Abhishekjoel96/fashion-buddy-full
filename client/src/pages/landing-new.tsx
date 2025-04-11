@@ -442,7 +442,7 @@ export default function LandingPage() {
                   <div className="relative bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
                     <div className="relative aspect-[3/4] bg-gray-800">
                       <img 
-                        src="/images/mans-skin-tone.jpeg" 
+                        src="/images/fashion-model.jpeg" 
                         alt="Skin tone analysis demo" 
                         className="absolute inset-0 w-full h-full object-cover"
                       />
@@ -551,7 +551,7 @@ export default function LandingPage() {
                 </p>
                 <div className="aspect-square bg-gray-800 rounded-lg mb-4 overflow-hidden">
                   <img 
-                    src="/images/mans-skin-tone.jpeg" 
+                    src="/images/fashion-model.jpeg" 
                     alt="Send a photo" 
                     className="w-full h-full object-cover"
                   />
