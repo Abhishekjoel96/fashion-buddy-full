@@ -163,7 +163,7 @@ function ParallaxSection({
       if (!sectionRef.current) return;
       const { top } = sectionRef.current.getBoundingClientRect();
       const windowHeight = window.innerHeight;
-      
+
       if (top < windowHeight && top > -windowHeight) {
         const newOffset = (top / windowHeight) * 100;
         setOffset(newOffset);
@@ -193,7 +193,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <SiteHeader />
-      
+
       {/* Hero section */}
       <section className="min-h-screen relative overflow-hidden bg-[#050505] flex items-center">
         <div className="absolute inset-0 bg-gradient-to-b from-indigo-900/20 via-purple-800/10 to-black opacity-50 z-0"></div>
@@ -259,7 +259,7 @@ export default function LandingPage() {
                   <div className="relative h-full w-full bg-gray-900 border border-gray-800 rounded-[40px] overflow-hidden shadow-2xl">
                     {/* Phone notch */}
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1/3 h-6 bg-black rounded-b-xl z-10"></div>
-                    
+
                     <div className="p-4 h-full flex flex-col">
                       {/* WhatsApp header */}
                       <div className="bg-[#075E54] text-white p-3 rounded-t-xl flex items-center">
@@ -271,26 +271,26 @@ export default function LandingPage() {
                           <p className="text-xs text-green-100 opacity-80">Online</p>
                         </div>
                       </div>
-                      
+
                       {/* Chat content */}
                       <div className="flex-1 bg-[#E5DDD5] bg-opacity-10 backdrop-blur-sm p-3 flex flex-col gap-3 overflow-y-auto">
                         <div className="bg-[#DCF8C6] bg-opacity-10 p-2 rounded-lg max-w-[80%] self-end">
                           <p className="text-xs text-white">Hi! I want to know what colors look best on me.</p>
                           <p className="text-[10px] text-gray-400 text-right">10:42 AM</p>
                         </div>
-                        
+
                         <div className="bg-white bg-opacity-10 p-2 rounded-lg max-w-[80%]">
                           <p className="text-xs text-white">Hello! I'd be happy to help. Could you send me a selfie in natural light?</p>
                           <p className="text-[10px] text-gray-400 text-right">10:43 AM</p>
                         </div>
-                        
+
                         <div className="bg-[#DCF8C6] bg-opacity-10 p-2 rounded-lg max-w-[80%] self-end">
                           <div className="bg-gray-700 h-32 w-full rounded-md mb-1 flex items-center justify-center">
                             <p className="text-[10px] text-gray-400">User Selfie</p>
                           </div>
                           <p className="text-[10px] text-gray-400 text-right">10:45 AM</p>
                         </div>
-                        
+
                         <div className="bg-white bg-opacity-10 p-2 rounded-lg max-w-[80%]">
                           <p className="text-xs text-white">Based on your skin tone, I recommend:</p>
                           <div className="my-2 flex gap-1">
@@ -301,13 +301,13 @@ export default function LandingPage() {
                           <p className="text-xs text-white">Would you like to see clothes in these colors?</p>
                           <p className="text-[10px] text-gray-400 text-right">10:46 AM</p>
                         </div>
-                        
+
                         <div className="bg-[#DCF8C6] bg-opacity-10 p-2 rounded-lg max-w-[80%] self-end">
                           <p className="text-xs text-white">Yes, please show me some shirts!</p>
                           <p className="text-[10px] text-gray-400 text-right">10:47 AM</p>
                         </div>
                       </div>
-                      
+
                       {/* Input field */}
                       <div className="bg-[#1F2C34] p-2 rounded-b-xl flex items-center gap-2">
                         <div className="flex-1 bg-[#2A3942] rounded-full px-3 py-1.5">
@@ -326,7 +326,7 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
-        
+
         <ScrollDownIndicator />
       </section>
 
@@ -374,7 +374,7 @@ export default function LandingPage() {
                 <p className="text-sm font-medium text-primary mb-2">HOW IT WORKS</p>
                 <h2 className="text-4xl md:text-5xl font-bold text-white">Simple Process,<br />Amazing Results</h2>
               </div>
-              
+
               <div className="mt-6 md:mt-0 inline-flex bg-gray-900 p-1 rounded-lg">
                 <button 
                   onClick={() => setActiveTab("color")}
@@ -396,7 +396,7 @@ export default function LandingPage() {
                 </button>
               </div>
             </div>
-            
+
             {activeTab === "color" ? (
               <div className="grid md:grid-cols-2 gap-16 items-center">
                 <div>
@@ -417,7 +417,7 @@ export default function LandingPage() {
                       description="Receive your personalized color palette with complementary colors and specific clothing recommendations from Indian brands."
                     />
                   </div>
-                  
+
                   <div className="mt-12">
                     <ColorPalette 
                       title="Your complementary colors" 
@@ -429,13 +429,13 @@ export default function LandingPage() {
                     />
                   </div>
                 </div>
-                
+
                 <div className="relative">
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl blur opacity-30"></div>
                   <div className="relative bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
                     <div className="relative aspect-[3/4] bg-gray-800">
                       <img 
-                        src="/skin-analysis.jpeg" 
+                        src="/images/skin-analysis.jpeg" 
                         alt="Skin tone analysis demo" 
                         className="absolute inset-0 w-full h-full object-cover"
                       />
@@ -478,7 +478,7 @@ export default function LandingPage() {
                       description="Receive realistic visualization of how the garments would look on you and direct links to purchase them from Indian retailers."
                     />
                   </div>
-                  
+
                   <div className="mt-10 p-6 border border-gray-800 rounded-xl bg-gray-900/50">
                     <h4 className="text-white font-medium mb-3">The Technology</h4>
                     <p className="text-sm text-gray-400 mb-4">
@@ -492,13 +492,13 @@ export default function LandingPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="relative">
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl blur opacity-30"></div>
                   <div className="relative bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
                     <div className="relative aspect-video bg-gray-800">
                       <img 
-                        src="/virtual-tryon.jpeg" 
+                        src="/images/virtual-tryon.jpeg" 
                         alt="Virtual try-on demo" 
                         className="absolute inset-0 w-full h-full object-cover"
                       />
@@ -521,7 +521,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-      
+
       {/* Example chat section */}
       <section className="py-20 bg-[#050505]">
         <div className="container mx-auto px-6">
@@ -534,7 +534,7 @@ export default function LandingPage() {
                 Just chat like you would with a friend.
               </p>
             </div>
-            
+
             <div className="grid md:grid-cols-3 gap-6 mt-12">
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 transition-transform duration-300 hover:translate-y-[-10px]">
                 <p className="text-sm text-gray-400 mb-4">Step 1</p>
@@ -544,13 +544,13 @@ export default function LandingPage() {
                 </p>
                 <div className="aspect-square bg-gray-800 rounded-lg mb-4 overflow-hidden">
                   <img 
-                    src="/skin-analysis.jpeg" 
+                    src="/images/skin-analysis.jpeg" 
                     alt="Send a photo" 
                     className="w-full h-full object-cover"
                   />
                 </div>
               </div>
-              
+
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 transition-transform duration-300 hover:translate-y-[-10px] md:translate-y-6">
                 <p className="text-sm text-gray-400 mb-4">Step 2</p>
                 <h3 className="text-xl font-medium text-white mb-2">Get Recommendations</h3>
@@ -565,7 +565,7 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 transition-transform duration-300 hover:translate-y-[-10px]">
                 <p className="text-sm text-gray-400 mb-4">Step 3</p>
                 <h3 className="text-xl font-medium text-white mb-2">Shop with Confidence</h3>
@@ -574,7 +574,7 @@ export default function LandingPage() {
                 </p>
                 <div className="aspect-square bg-gray-800 rounded-lg mb-4 overflow-hidden">
                   <img 
-                    src="/shopping.jpeg" 
+                    src="/images/shopping.jpeg" 
                     alt="Shop with confidence" 
                     className="w-full h-full object-cover"
                   />
@@ -660,7 +660,7 @@ export default function LandingPage() {
                 Your personal AI fashion assistant on WhatsApp, designed for Indian fashion and skin tones.
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-1 gap-10 text-center md:text-left">
               <div>
                 <h4 className="text-white font-medium mb-4">Product</h4>
@@ -704,7 +704,7 @@ export default function LandingPage() {
 
             </div>
           </div>
-          
+
           <div className="pt-8 border-t border-gray-900 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
             <p>© {new Date().getFullYear()} Fashion Buddy. All rights reserved.</p>
             <div className="mt-4 md:mt-0 flex gap-6">
@@ -715,22 +715,22 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
-      
+
       {/* Custom cursor effect - purely decorative */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-50 opacity-0">
         <div className="absolute w-64 h-64 rounded-full radial-gradient"></div>
       </div>
-      
+
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes scroll {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(6px); }
         }
-        
+
         .animate-scroll {
           animation: scroll 1.5s ease-in-out infinite;
         }
-        
+
         .radial-gradient {
           background: radial-gradient(circle, rgba(79, 70, 229, 0.15) 0%, rgba(79, 70, 229, 0) 70%);
         }
