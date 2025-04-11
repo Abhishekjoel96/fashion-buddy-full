@@ -199,13 +199,7 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-indigo-900/20 via-purple-800/10 to-black opacity-50 z-0"></div>
         <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-indigo-600/20 to-transparent z-0"></div>
         <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-5 z-0"></div>
-        <div className="absolute inset-0 opacity-10 z-0">
-          <img 
-            src="/images/fashion-hero.jpeg" 
-            alt="Fashion background" 
-            className="w-full h-full object-cover object-center"
-          />
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/30 via-purple-800/20 to-black z-0"></div>
 
         <div className="relative z-10 container mx-auto px-6 py-20">
           <div className="max-w-6xl mx-auto">
