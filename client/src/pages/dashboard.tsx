@@ -190,8 +190,8 @@ export default function Dashboard() {
                   <p className="text-sm text-muted-foreground mb-2">
                     Add <span className="font-medium">+1 (415) 523-8886</span> to your contacts in WhatsApp.
                   </p>
-                  <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md flex items-center justify-between">
-                    <code className="text-sm font-mono">+1 (415) 523-8886</code>
+                  <div className="bg-primary/10 border border-primary/20 p-3 rounded-md flex items-center justify-between">
+                    <code className="text-sm font-mono text-primary font-semibold">+1 (415) 523-8886</code>
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -218,8 +218,8 @@ export default function Dashboard() {
                   <p className="text-sm text-muted-foreground mb-2">
                     Send the message <span className="font-medium">"join brave-very"</span> to the number you saved.
                   </p>
-                  <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md flex items-center justify-between">
-                    <code className="text-sm font-mono">join brave-very</code>
+                  <div className="bg-primary/10 border border-primary/20 p-3 rounded-md flex items-center justify-between">
+                    <code className="text-sm font-mono text-primary font-semibold">join brave-very</code>
                     <Button 
                       variant="outline" 
                       size="sm"
