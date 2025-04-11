@@ -175,9 +175,9 @@ export default function Dashboard() {
         <div className="max-w-3xl mx-auto">
           <Card>
             <CardHeader>
-              <CardTitle>How it works</CardTitle>
+              <CardTitle>Getting Started</CardTitle>
               <CardDescription>
-                Get started with Fashion Buddy in 3 simple steps
+                Connect with Fashion Buddy on WhatsApp in 3 simple steps
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-8">
@@ -186,10 +186,26 @@ export default function Dashboard() {
                   <span className="flex items-center justify-center h-6 w-6 text-primary font-bold">1</span>
                 </div>
                 <div>
-                  <h3 className="font-medium mb-1">Start a WhatsApp chat</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Click the button above to start a conversation with our AI assistant on WhatsApp.
+                  <h3 className="font-medium mb-1">Save this number in WhatsApp</h3>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Add <span className="font-medium">+1 (415) 523-8886</span> to your contacts in WhatsApp.
                   </p>
+                  <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md flex items-center justify-between">
+                    <code className="text-sm font-mono">+1 (415) 523-8886</code>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText("+1 (415) 523-8886");
+                        toast({
+                          title: "Copied to clipboard",
+                          description: "The WhatsApp number has been copied to your clipboard.",
+                        });
+                      }}
+                    >
+                      Copy
+                    </Button>
+                  </div>
                 </div>
               </div>
               
@@ -198,10 +214,26 @@ export default function Dashboard() {
                   <span className="flex items-center justify-center h-6 w-6 text-primary font-bold">2</span>
                 </div>
                 <div>
-                  <h3 className="font-medium mb-1">Share your photos</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Send a selfie for color analysis or a full-body photo for virtual try-on.
+                  <h3 className="font-medium mb-1">Send the activation message</h3>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Send the message <span className="font-medium">"join brave-very"</span> to the number you saved.
                   </p>
+                  <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md flex items-center justify-between">
+                    <code className="text-sm font-mono">join brave-very</code>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText("join brave-very");
+                        toast({
+                          title: "Copied to clipboard",
+                          description: "The activation message has been copied to your clipboard.",
+                        });
+                      }}
+                    >
+                      Copy
+                    </Button>
+                  </div>
                 </div>
               </div>
               
@@ -210,9 +242,9 @@ export default function Dashboard() {
                   <span className="flex items-center justify-center h-6 w-6 text-primary font-bold">3</span>
                 </div>
                 <div>
-                  <h3 className="font-medium mb-1">Get personalized recommendations</h3>
+                  <h3 className="font-medium mb-1">Start a conversation</h3>
                   <p className="text-sm text-muted-foreground">
-                    Receive color recommendations, virtual try-on results, and shopping suggestions directly in WhatsApp.
+                    Click one of the buttons below to initiate your WhatsApp session with Fashion Buddy.
                   </p>
                 </div>
               </div>
