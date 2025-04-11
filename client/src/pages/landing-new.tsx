@@ -1308,10 +1308,10 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row justify-between items-center md:items-start mb-12">
             <div className="mb-10 md:mb-0 text-center md:text-left">
               <div className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent mb-3">
-                Fashion Buddy
+                Fashion BuddyAI
               </div>
               <p className="text-sm text-gray-400 max-w-xs">
-                Your personal AI fashion assistant on WhatsApp, designed for Indian fashion and skin tones.
+                Your personal AI fashion assistant on WhatsApp, powered by artificial intelligence and designed for Indian fashion and skin tones.
               </p>
             </div>
             
