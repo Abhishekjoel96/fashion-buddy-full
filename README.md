@@ -3,6 +3,8 @@ Your Personal AI Stylist on WhatsApp! 🤖
 
 Struggle with choosing clothes? 🤔 Wish you could see how outfits look before buying? 👚
 
+
+
 Fashion BuddyAI is your simple WhatsApp helper! It uses clever AI to:
 
 Find colors that perfectly match your skin tone 🎨.
@@ -24,6 +26,7 @@ The bot replies with choices like "Analyze Colors ✨" or "Virtual Try-On 👚".
 Send the photo the bot asks for (a selfie or a full-body picture) 📸.
 Wait just a moment while the AI works its magic! ⏳✨
 Tada! 🎉 The bot sends back your personalized color tips 🎨 or the picture of you virtually wearing the clothes! 🤩
+
 Technology Behind the Magic 🪄
 Fashion BuddyAI uses some neat tech working together:
 
