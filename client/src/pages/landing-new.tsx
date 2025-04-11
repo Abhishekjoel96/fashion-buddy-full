@@ -261,14 +261,72 @@ export default function LandingPage() {
               </div>
 
               <div className="md:w-2/5 mt-12 md:mt-0 order-first md:order-last">
-                <div className="relative mx-auto">
-                  <div className="absolute -inset-1 bg-gradient-to-br from-blue-700/30 to-indigo-700/30 rounded-xl blur-xl"></div>
-                  <div className="relative bg-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-2xl">
-                    <img 
-                      src="/images/whatsapp-conversation.png" 
-                      alt="WhatsApp Fashion Buddy Conversation" 
-                      className="w-full h-auto"
-                    />
+                <div className="relative h-[580px] w-[300px] mx-auto">
+                  <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-700/20 to-indigo-700/20 rounded-[40px] blur-[60px]"></div>
+                  <div className="relative h-full w-full bg-gray-900 border border-gray-800 rounded-[40px] overflow-hidden shadow-2xl">
+                    {/* Phone notch */}
+                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1/3 h-6 bg-black rounded-b-xl z-10"></div>
+                    
+                    <div className="p-4 h-full flex flex-col">
+                      {/* WhatsApp header */}
+                      <div className="bg-[#075E54] text-white p-3 rounded-t-xl flex items-center">
+                        <div className="w-8 h-8 rounded-full bg-gray-200 mr-3 flex items-center justify-center">
+                          <span className="text-xs font-bold text-[#075E54]">FB</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">Fashion Buddy</p>
+                          <p className="text-xs text-green-100 opacity-80">Online</p>
+                        </div>
+                      </div>
+                      
+                      {/* Chat content */}
+                      <div className="flex-1 bg-[#E5DDD5] bg-opacity-10 backdrop-blur-sm p-3 flex flex-col gap-3 overflow-y-auto">
+                        <div className="bg-[#DCF8C6] bg-opacity-10 p-2 rounded-lg max-w-[80%] self-end">
+                          <p className="text-xs text-white">Hi! I want to know what colors look best on me.</p>
+                          <p className="text-[10px] text-gray-400 text-right">10:42 AM</p>
+                        </div>
+                        
+                        <div className="bg-white bg-opacity-10 p-2 rounded-lg max-w-[80%]">
+                          <p className="text-xs text-white">Hello! I'd be happy to help. Could you send me a selfie in natural light?</p>
+                          <p className="text-[10px] text-gray-400 text-right">10:43 AM</p>
+                        </div>
+                        
+                        <div className="bg-[#DCF8C6] bg-opacity-10 p-2 rounded-lg max-w-[80%] self-end">
+                          <div className="bg-gray-700 h-32 w-full rounded-md mb-1 flex items-center justify-center">
+                            <p className="text-[10px] text-gray-400">User Selfie</p>
+                          </div>
+                          <p className="text-[10px] text-gray-400 text-right">10:45 AM</p>
+                        </div>
+                        
+                        <div className="bg-white bg-opacity-10 p-2 rounded-lg max-w-[80%]">
+                          <p className="text-xs text-white">Based on your skin tone, I recommend:</p>
+                          <div className="my-2 flex gap-1">
+                            <div className="w-6 h-6 rounded-full bg-blue-600"></div>
+                            <div className="w-6 h-6 rounded-full bg-emerald-600"></div>
+                            <div className="w-6 h-6 rounded-full bg-violet-600"></div>
+                          </div>
+                          <p className="text-xs text-white">Would you like to see clothes in these colors?</p>
+                          <p className="text-[10px] text-gray-400 text-right">10:46 AM</p>
+                        </div>
+                        
+                        <div className="bg-[#DCF8C6] bg-opacity-10 p-2 rounded-lg max-w-[80%] self-end">
+                          <p className="text-xs text-white">Yes, please show me some shirts!</p>
+                          <p className="text-[10px] text-gray-400 text-right">10:47 AM</p>
+                        </div>
+                      </div>
+                      
+                      {/* Input field */}
+                      <div className="bg-[#1F2C34] p-2 rounded-b-xl flex items-center gap-2">
+                        <div className="flex-1 bg-[#2A3942] rounded-full px-3 py-1.5">
+                          <p className="text-xs text-gray-400">Type a message</p>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-[#00A884] flex items-center justify-center">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 12L4 4L6 12L4 20L20 12Z" fill="white"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
