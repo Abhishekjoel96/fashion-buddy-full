@@ -220,31 +220,184 @@ interface ProcessStepProps {
 
 function ProcessStep({ number, title, description }: ProcessStepProps) {
   return (
-    <div className="flex gap-6 group">
+    <motion.div 
+      className="flex gap-6 group"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ 
+        duration: 0.5, 
+        delay: number * 0.2
+      }}
+      viewport={{ once: true, margin: "-100px" }}
+    >
       <div className="relative">
-        <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center text-white font-bold text-lg border border-gray-700 group-hover:border-primary group-hover:bg-primary/10 transition-all duration-300">
-          {number}
-        </div>
+        {/* Number with 3D effect and glow */}
+        <motion.div
+          className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center text-white font-bold text-lg border border-gray-700 group-hover:border-primary group-hover:bg-primary/10 transition-all duration-300 shadow-lg relative z-10"
+          whileHover={{ 
+            scale: 1.1,
+            boxShadow: "0 0 20px rgba(79, 70, 229, 0.3)"
+          }}
+          whileTap={{ scale: 0.95 }}
+        >
+          {/* Inner glow */}
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/10 to-indigo-600/5 opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-300"></div>
+          
+          {/* Number with shadow for 3D effect */}
+          <motion.span 
+            className="relative z-10 bg-gradient-to-br from-white to-gray-300 bg-clip-text text-transparent drop-shadow-[0_0.5px_1px_rgba(0,0,0,0.5)] text-xl font-bold"
+            animate={{
+              textShadow: [
+                "0 0 5px rgba(79, 70, 229, 0)",
+                "0 0 10px rgba(79, 70, 229, 0.3)",
+                "0 0 5px rgba(79, 70, 229, 0)"
+              ]
+            }}
+            transition={{ duration: 2, repeat: Infinity, delay: number * 0.5 }}
+          >
+            {number}
+          </motion.span>
+        </motion.div>
+        
+        {/* Connecting line with animation */}
         {number < 3 && (
-          <div className="absolute top-12 left-1/2 transform -translate-x-1/2 w-px h-20 bg-gray-800 group-hover:bg-primary/50 transition-all duration-300"></div>
+          <motion.div 
+            className="absolute top-14 left-1/2 transform -translate-x-1/2 w-0.5 h-24 bg-gradient-to-b from-gray-800 via-gray-700 to-gray-800 group-hover:from-primary/50 group-hover:via-indigo-500/30 group-hover:to-primary/10 transition-all duration-700"
+            initial={{ scaleY: 0, opacity: 0.3 }}
+            whileInView={{ scaleY: 1, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+          >
+            {/* Animated dot traveling down the line */}
+            <motion.div
+              className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-primary/70 shadow-[0_0_5px_rgba(79,70,229,0.5)]"
+              animate={{
+                y: [0, 100, 0],
+                opacity: [0, 1, 0]
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: number * 0.5
+              }}
+            />
+          </motion.div>
         )}
       </div>
-      <div className="pt-3 pb-12">
-        <h3 className="text-white text-xl font-medium mb-2">{title}</h3>
+      
+      <motion.div 
+        className="pt-3 pb-12"
+        whileHover={{ x: 5 }}
+        transition={{ type: "spring", stiffness: 300 }}
+      >
+        <motion.h3 
+          className="text-white text-xl font-medium mb-2 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent"
+          animate={{
+            textShadow: [
+              "0 0 5px rgba(255, 255, 255, 0.1)",
+              "0 0 8px rgba(255, 255, 255, 0.2)",
+              "0 0 5px rgba(255, 255, 255, 0.1)"
+            ]
+          }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          {title}
+        </motion.h3>
         <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
 function ScrollDownIndicator() {
   return (
-    <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center animate-bounce">
-      <p className="text-sm text-white/60 mb-2">Scroll Down</p>
-      <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
-        <div className="w-1.5 h-1.5 bg-white/60 rounded-full mt-2 animate-scroll"></div>
-      </div>
-    </div>
+    <motion.div 
+      className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center z-20"
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ 
+        opacity: 1, 
+        y: 0,
+        transition: { 
+          delay: 1.5,
+          duration: 0.8 
+        }
+      }}
+      whileHover={{ scale: 1.1 }}
+    >
+      {/* Text with glow effect */}
+      <motion.p 
+        className="text-sm font-medium bg-gradient-to-r from-gray-100 to-gray-300 bg-clip-text text-transparent mb-3"
+        animate={{
+          textShadow: [
+            "0 0 3px rgba(255,255,255,0.1)",
+            "0 0 8px rgba(255,255,255,0.3)",
+            "0 0 3px rgba(255,255,255,0.1)"
+          ]
+        }}
+        transition={{ duration: 2, repeat: Infinity }}
+      >
+        Scroll Down
+      </motion.p>
+      
+      {/* 3D mouse with animated scroll indicator */}
+      <motion.div 
+        className="w-6 h-10 border-2 border-gray-500/50 rounded-full flex justify-center relative overflow-hidden backdrop-blur-sm shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+        animate={{ 
+          boxShadow: [
+            "0 0 5px rgba(255,255,255,0.1)",
+            "0 0 15px rgba(255,255,255,0.2)",
+            "0 0 5px rgba(255,255,255,0.1)"
+          ] 
+        }}
+        transition={{ duration: 2, repeat: Infinity }}
+      >
+        {/* Inner glow */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-50"></div>
+        
+        {/* Animated dot */}
+        <motion.div 
+          className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_5px_rgba(79,70,229,0.5)]"
+          initial={{ y: 2 }}
+          animate={{ 
+            y: [2, 6, 2],
+            opacity: [0.8, 1, 0.8],
+            scale: [1, 1.2, 1]
+          }}
+          transition={{ 
+            duration: 1.5, 
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut"
+          }}
+        />
+      </motion.div>
+      
+      {/* Down arrow with fade effect */}
+      <motion.div
+        className="mt-1"
+        animate={{ 
+          y: [0, 3, 0],
+          opacity: [0.5, 1, 0.5]
+        }}
+        transition={{ 
+          duration: 1.5, 
+          repeat: Infinity,
+          repeatType: "reverse",
+          ease: "easeInOut",
+          delay: 0.5
+        }}
+      >
+        <svg width="16" height="8" viewBox="0 0 16 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M1 1L8 7L15 1" stroke="url(#paint0_linear)" strokeWidth="2" strokeLinecap="round"/>
+          <defs>
+            <linearGradient id="paint0_linear" x1="8" y1="7" x2="8" y2="1" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#4F46E5" stopOpacity="0.8"/>
+              <stop offset="1" stopColor="#FFFFFF" stopOpacity="0.5"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -296,10 +449,114 @@ export default function LandingPage() {
       
       {/* Hero section */}
       <section className="min-h-screen relative overflow-hidden bg-[#050505] flex items-center">
+        {/* Dynamic animated grid background */}
+        <div className="absolute inset-0 z-0 bg-black">
+          {/* Grid pattern */}
+          <div 
+            className="absolute inset-0 z-0"
+            style={{
+              backgroundImage: `linear-gradient(rgba(79, 70, 229, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(79, 70, 229, 0.1) 1px, transparent 1px)`,
+              backgroundSize: '40px 40px'
+            }}
+          ></div>
+          
+          {/* Animated dots at grid intersections */}
+          <div className="absolute inset-0 opacity-30">
+            {[...Array(15)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute h-1 w-1 rounded-full bg-indigo-500"
+                style={{
+                  top: `${Math.floor(i / 5) * 25}%`,
+                  left: `${(i % 5) * 25}%`,
+                }}
+                animate={{
+                  opacity: [0.2, 0.8, 0.2],
+                  scale: [1, 1.5, 1],
+                }}
+                transition={{
+                  duration: 3 + (i % 4),
+                  repeat: Infinity,
+                  delay: i * 0.2,
+                }}
+              />
+            ))}
+          </div>
+          
+          {/* Horizontal lines animation */}
+          {[...Array(5)].map((_, i) => (
+            <motion.div
+              key={`h-${i}`}
+              className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent"
+              style={{ top: `${(i + 1) * 20}%` }}
+              animate={{
+                opacity: [0.1, 0.3, 0.1],
+                scaleX: [0.8, 1, 0.8],
+              }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                delay: i * 0.5,
+              }}
+            />
+          ))}
+          
+          {/* Vertical lines animation */}
+          {[...Array(5)].map((_, i) => (
+            <motion.div
+              key={`v-${i}`}
+              className="absolute top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-blue-500/20 to-transparent"
+              style={{ left: `${(i + 1) * 20}%` }}
+              animate={{
+                opacity: [0.1, 0.3, 0.1],
+                scaleY: [0.8, 1, 0.8],
+              }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                delay: i * 0.5,
+              }}
+            />
+          ))}
+        </div>
+        
+        {/* Gradient overlays */}
         <div className="absolute inset-0 bg-gradient-to-b from-indigo-900/20 via-purple-800/10 to-black opacity-50 z-0"></div>
         <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-indigo-600/20 to-transparent z-0"></div>
-        <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-5 z-0"></div>
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/30 via-purple-800/20 to-black z-0"></div>
+        
+        {/* Floating blurred particles */}
+        {[...Array(8)].map((_, i) => (
+          <motion.div
+            key={`particle-${i}`}
+            className="absolute rounded-full blur-xl opacity-20 bg-primary"
+            style={{
+              width: 100 + Math.random() * 200,
+              height: 100 + Math.random() * 200,
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              x: [
+                Math.random() * 50 - 25, 
+                Math.random() * 50 - 25,
+                Math.random() * 50 - 25
+              ],
+              y: [
+                Math.random() * 50 - 25, 
+                Math.random() * 50 - 25,
+                Math.random() * 50 - 25
+              ],
+              opacity: [0.1, 0.2, 0.1],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 15 + Math.random() * 15,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
 
         <div className="relative z-10 container mx-auto px-6 py-20">
           <div className="max-w-6xl mx-auto">
@@ -514,76 +771,209 @@ export default function LandingPage() {
                 </motion.div>
               </motion.div>
 
-              <div className="md:w-2/5 mt-12 md:mt-0 order-first md:order-last">
-                <div className="relative h-[580px] w-[300px] mx-auto">
-                  <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-700/20 to-indigo-700/20 rounded-[40px] blur-[60px]"></div>
-                  <div className="relative h-full w-full bg-gray-900 border border-gray-800 rounded-[40px] overflow-hidden shadow-2xl">
+              <motion.div 
+                className="md:w-2/5 mt-12 md:mt-0 order-first md:order-last"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+              >
+                <motion.div 
+                  className="relative h-[580px] w-[300px] mx-auto"
+                  initial={{ y: 20 }}
+                  animate={{ y: 0 }}
+                  transition={{ 
+                    type: "spring",
+                    stiffness: 50,
+                    damping: 20,
+                    delay: 0.5 
+                  }}
+                  whileHover={{ 
+                    y: -10,
+                    transition: { duration: 0.5 }
+                  }}
+                >
+                  {/* Glowing effect around phone */}
+                  <motion.div 
+                    className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-700/30 to-indigo-700/30 rounded-[40px] blur-[60px]"
+                    animate={{ 
+                      opacity: [0.4, 0.8, 0.4],
+                      scale: [1, 1.05, 1]
+                    }}
+                    transition={{ 
+                      duration: 5, 
+                      repeat: Infinity,
+                      repeatType: "reverse" 
+                    }}
+                  />
+                  
+                  {/* Floating animated particles behind phone */}
+                  <div className="absolute inset-0 -z-10">
+                    {[...Array(6)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="absolute w-2 h-2 rounded-full bg-primary/40"
+                        animate={{
+                          x: [Math.random() * 100, Math.random() * 200, Math.random() * 100],
+                          y: [Math.random() * 100, Math.random() * 500, Math.random() * 100],
+                          opacity: [0.1, 0.5, 0.1],
+                          scale: [1, 1.5, 1]
+                        }}
+                        transition={{
+                          duration: 10 + Math.random() * 10,
+                          repeat: Infinity,
+                          repeatType: "reverse",
+                          delay: i * 0.5
+                        }}
+                        style={{
+                          left: `${Math.random() * 100}%`,
+                          top: `${Math.random() * 100}%`
+                        }}
+                      />
+                    ))}
+                  </div>
+                  
+                  {/* 3D Raised and Floating Phone */}
+                  <motion.div 
+                    className="relative h-full w-full bg-gray-900 border border-gray-800/50 rounded-[40px] overflow-hidden shadow-[0_0_40px_rgba(60,60,60,0.3)] backdrop-blur-sm"
+                    animate={{ 
+                      y: [0, -10, 0],
+                      rotate: [0, 0.5, 0, -0.5, 0]
+                    }}
+                    transition={{ 
+                      duration: 8, 
+                      repeat: Infinity,
+                      repeatType: "reverse" 
+                    }}
+                  >
                     {/* Phone notch */}
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1/3 h-6 bg-black rounded-b-xl z-10"></div>
                     
+                    {/* Screen content */}
                     <div className="p-4 h-full flex flex-col">
                       {/* WhatsApp header */}
-                      <div className="bg-[#075E54] text-white p-3 rounded-t-xl flex items-center">
-                        <div className="w-8 h-8 rounded-full bg-gray-200 mr-3 flex items-center justify-center">
+                      <div className="bg-[#075E54] text-white p-3 rounded-t-xl flex items-center shadow-md">
+                        <motion.div 
+                          className="w-8 h-8 rounded-full bg-gray-200 mr-3 flex items-center justify-center shadow-inner"
+                          whileHover={{ scale: 1.2, rotate: 360 }}
+                          transition={{ duration: 0.5 }}
+                        >
                           <span className="text-xs font-bold text-[#075E54]">FB</span>
-                        </div>
+                        </motion.div>
                         <div>
                           <p className="font-medium text-sm">Fashion Buddy</p>
-                          <p className="text-xs text-green-100 opacity-80">Online</p>
+                          <div className="flex items-center">
+                            <span className="inline-block w-2 h-2 rounded-full bg-green-400 mr-1 animate-pulse"></span>
+                            <p className="text-xs text-green-100 opacity-80">Online</p>
+                          </div>
                         </div>
                       </div>
                       
-                      {/* Chat content */}
-                      <div className="flex-1 bg-[#E5DDD5] bg-opacity-10 backdrop-blur-sm p-3 flex flex-col gap-3 overflow-y-auto">
-                        <div className="bg-[#DCF8C6] bg-opacity-10 p-2 rounded-lg max-w-[80%] self-end">
+                      {/* Chat content with staggered animation */}
+                      <div className="flex-1 bg-gradient-to-b from-gray-900/80 to-gray-800/80 backdrop-blur-md p-3 flex flex-col gap-3 overflow-y-auto">
+                        {/* User message 1 */}
+                        <motion.div 
+                          className="bg-gradient-to-r from-indigo-900/30 to-blue-900/30 p-2 rounded-lg max-w-[80%] self-end backdrop-blur-sm border border-indigo-500/10 shadow-lg"
+                          initial={{ opacity: 0, x: 50 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 1, duration: 0.5 }}
+                        >
                           <p className="text-xs text-white">Hi! I want to know what colors look best on me.</p>
                           <p className="text-[10px] text-gray-400 text-right">10:42 AM</p>
-                        </div>
+                        </motion.div>
                         
-                        <div className="bg-white bg-opacity-10 p-2 rounded-lg max-w-[80%]">
+                        {/* AI response 1 */}
+                        <motion.div 
+                          className="bg-gradient-to-r from-gray-800/50 to-gray-700/50 p-2 rounded-lg max-w-[80%] border border-gray-700/30 shadow-lg"
+                          initial={{ opacity: 0, x: -50 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 1.5, duration: 0.5 }}
+                        >
                           <p className="text-xs text-white">Hello! I'd be happy to help. Could you send me a selfie in natural light?</p>
                           <p className="text-[10px] text-gray-400 text-right">10:43 AM</p>
-                        </div>
+                        </motion.div>
                         
-                        <div className="bg-[#DCF8C6] bg-opacity-10 p-2 rounded-lg max-w-[80%] self-end">
-                          <div className="bg-gray-700 h-32 w-full rounded-md mb-1 flex items-center justify-center">
+                        {/* User message 2 with photo */}
+                        <motion.div 
+                          className="bg-gradient-to-r from-indigo-900/30 to-blue-900/30 p-2 rounded-lg max-w-[80%] self-end backdrop-blur-sm border border-indigo-500/10 shadow-lg"
+                          initial={{ opacity: 0, x: 50 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 2, duration: 0.5 }}
+                        >
+                          <motion.div 
+                            className="bg-gray-700 h-32 w-full rounded-md mb-1 flex items-center justify-center overflow-hidden"
+                            whileHover={{ scale: 1.05 }}
+                          >
                             <p className="text-[10px] text-gray-400">User Selfie</p>
-                          </div>
+                          </motion.div>
                           <p className="text-[10px] text-gray-400 text-right">10:45 AM</p>
-                        </div>
+                        </motion.div>
                         
-                        <div className="bg-white bg-opacity-10 p-2 rounded-lg max-w-[80%]">
+                        {/* AI response 2 with color recommendations */}
+                        <motion.div 
+                          className="bg-gradient-to-r from-gray-800/50 to-gray-700/50 p-2 rounded-lg max-w-[80%] border border-gray-700/30 shadow-lg"
+                          initial={{ opacity: 0, x: -50 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 2.5, duration: 0.5 }}
+                        >
                           <p className="text-xs text-white">Based on your skin tone, I recommend:</p>
                           <div className="my-2 flex gap-1">
-                            <div className="w-6 h-6 rounded-full bg-blue-600"></div>
-                            <div className="w-6 h-6 rounded-full bg-emerald-600"></div>
-                            <div className="w-6 h-6 rounded-full bg-violet-600"></div>
+                            <motion.div 
+                              className="w-6 h-6 rounded-full bg-blue-600 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+                              whileHover={{ scale: 1.2 }}
+                              animate={{ scale: [1, 1.1, 1] }}
+                              transition={{ duration: 2, repeat: Infinity, delay: 0 }}
+                            />
+                            <motion.div 
+                              className="w-6 h-6 rounded-full bg-emerald-600 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+                              whileHover={{ scale: 1.2 }}
+                              animate={{ scale: [1, 1.1, 1] }}
+                              transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+                            />
+                            <motion.div 
+                              className="w-6 h-6 rounded-full bg-violet-600 shadow-[0_0_10px_rgba(124,58,237,0.5)]"
+                              whileHover={{ scale: 1.2 }}
+                              animate={{ scale: [1, 1.1, 1] }}
+                              transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+                            />
                           </div>
                           <p className="text-xs text-white">Would you like to see clothes in these colors?</p>
                           <p className="text-[10px] text-gray-400 text-right">10:46 AM</p>
-                        </div>
+                        </motion.div>
                         
-                        <div className="bg-[#DCF8C6] bg-opacity-10 p-2 rounded-lg max-w-[80%] self-end">
+                        {/* User message 3 */}
+                        <motion.div 
+                          className="bg-gradient-to-r from-indigo-900/30 to-blue-900/30 p-2 rounded-lg max-w-[80%] self-end backdrop-blur-sm border border-indigo-500/10 shadow-lg"
+                          initial={{ opacity: 0, x: 50 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 3, duration: 0.5 }}
+                        >
                           <p className="text-xs text-white">Yes, please show me some shirts!</p>
                           <p className="text-[10px] text-gray-400 text-right">10:47 AM</p>
-                        </div>
+                        </motion.div>
                       </div>
                       
                       {/* Input field */}
-                      <div className="bg-[#1F2C34] p-2 rounded-b-xl flex items-center gap-2">
-                        <div className="flex-1 bg-[#2A3942] rounded-full px-3 py-1.5">
+                      <div className="bg-[#1F2C34] p-2 rounded-b-xl flex items-center gap-2 shadow-md">
+                        <div className="flex-1 bg-[#2A3942] rounded-full px-3 py-1.5 shadow-inner">
                           <p className="text-xs text-gray-400">Type a message</p>
                         </div>
-                        <div className="w-8 h-8 rounded-full bg-[#00A884] flex items-center justify-center">
+                        <motion.div 
+                          className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center shadow-lg cursor-pointer"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M20 12L4 4L6 12L4 20L20 12Z" fill="white"/>
                           </svg>
-                        </div>
+                        </motion.div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
+                  </motion.div>
+                  
+                  {/* Reflection effect */}
+                  <div className="absolute top-[5%] bottom-[70%] left-[10%] right-[10%] bg-white/5 -z-10 blur-md rounded-full transform rotate-[15deg]"></div>
+                </motion.div>
+              </motion.div>
             </div>
           </div>
         </div>
