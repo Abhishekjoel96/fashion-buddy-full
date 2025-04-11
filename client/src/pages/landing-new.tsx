@@ -279,13 +279,40 @@ export default function LandingPage() {
                         </div>
                       </div>
                       
-                      {/* Chat content - use clean image */}
-                      <div className="flex-1 bg-[#E5DDD5] bg-opacity-10 backdrop-blur-sm overflow-hidden">
-                        <img 
-                          src="/images/whatsapp-clean.jpeg" 
-                          alt="WhatsApp conversation" 
-                          className="w-full h-full object-cover"
-                        />
+                      {/* Chat content */}
+                      <div className="flex-1 bg-[#E5DDD5] bg-opacity-10 backdrop-blur-sm p-3 flex flex-col gap-3 overflow-y-auto">
+                        <div className="bg-[#DCF8C6] bg-opacity-10 p-2 rounded-lg max-w-[80%] self-end">
+                          <p className="text-xs text-white">Hi! I want to know what colors look best on me.</p>
+                          <p className="text-[10px] text-gray-400 text-right">10:42 AM</p>
+                        </div>
+                        
+                        <div className="bg-white bg-opacity-10 p-2 rounded-lg max-w-[80%]">
+                          <p className="text-xs text-white">Hello! I'd be happy to help. Could you send me a selfie in natural light?</p>
+                          <p className="text-[10px] text-gray-400 text-right">10:43 AM</p>
+                        </div>
+                        
+                        <div className="bg-[#DCF8C6] bg-opacity-10 p-2 rounded-lg max-w-[80%] self-end">
+                          <div className="bg-gray-700 h-32 w-full rounded-md mb-1 flex items-center justify-center">
+                            <p className="text-[10px] text-gray-400">User Selfie</p>
+                          </div>
+                          <p className="text-[10px] text-gray-400 text-right">10:45 AM</p>
+                        </div>
+                        
+                        <div className="bg-white bg-opacity-10 p-2 rounded-lg max-w-[80%]">
+                          <p className="text-xs text-white">Based on your skin tone, I recommend:</p>
+                          <div className="my-2 flex gap-1">
+                            <div className="w-6 h-6 rounded-full bg-blue-600"></div>
+                            <div className="w-6 h-6 rounded-full bg-emerald-600"></div>
+                            <div className="w-6 h-6 rounded-full bg-violet-600"></div>
+                          </div>
+                          <p className="text-xs text-white">Would you like to see clothes in these colors?</p>
+                          <p className="text-[10px] text-gray-400 text-right">10:46 AM</p>
+                        </div>
+                        
+                        <div className="bg-[#DCF8C6] bg-opacity-10 p-2 rounded-lg max-w-[80%] self-end">
+                          <p className="text-xs text-white">Yes, please show me some shirts!</p>
+                          <p className="text-[10px] text-gray-400 text-right">10:47 AM</p>
+                        </div>
                       </div>
                       
                       {/* Input field */}
