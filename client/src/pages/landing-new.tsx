@@ -511,8 +511,11 @@ export default function LandingPage() {
                         Try before you buy with our realistic virtual garment simulation that shows you 
                         how clothes would look on your body.
                       </p>
-                      <Button className="w-full bg-primary hover:bg-primary/90">
-                        Try it Yourself
+                      <Button 
+                        className="w-full bg-primary hover:bg-primary/90"
+                        asChild
+                      >
+                        <Link href="/auth">Try it Yourself</Link>
                       </Button>
                     </div>
                   </div>
