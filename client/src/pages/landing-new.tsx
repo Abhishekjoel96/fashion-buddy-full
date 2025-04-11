@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Check, CheckCircle, ChevronRight, Sparkles, Star, Zap } from "lucide-react";
 import { Link } from "wouter";
 import { useState, useRef, useEffect } from "react";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { SiteHeader } from "@/components/site-header";
 
@@ -14,24 +15,64 @@ interface FeatureCardProps {
 
 function FeatureCard({ title, description, icon, index }: FeatureCardProps) {
   return (
-    <div 
-      className="group flex flex-col gap-6 rounded-xl p-8 transition-all duration-300 hover:bg-gray-900 hover:shadow-2xl"
-      style={{
-        animationDelay: `${index * 100}ms`,
+    <motion.div 
+      className="group flex flex-col gap-6 rounded-xl p-8 transition-all duration-300 hover:bg-gray-900/80 backdrop-blur-lg hover:shadow-2xl border border-gray-800/30 relative overflow-hidden"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ 
+        duration: 0.5, 
+        delay: index * 0.1,
+        type: "spring",
+        stiffness: 100
+      }}
+      whileHover={{ 
+        scale: 1.03,
+        boxShadow: "0 25px 50px -12px rgba(79, 70, 229, 0.25)"
       }}
     >
-      <div className="rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center text-primary">
-        {icon}
+      {/* Glowing background element */}
+      <div className="absolute -inset-1 opacity-0 group-hover:opacity-20 bg-gradient-to-r from-primary to-indigo-600 blur-xl transition-all duration-700 group-hover:duration-500"></div>
+      
+      {/* Card content with glass morphism */}
+      <div className="relative z-10">
+        <div className="rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center text-primary group-hover:bg-primary/20 transition-all duration-300 shadow-lg shadow-primary/10">
+          <motion.div
+            animate={{ rotate: [0, 10, 0, -10, 0] }}
+            transition={{ 
+              repeat: Infinity, 
+              repeatType: "loop", 
+              duration: 5,
+              ease: "easeInOut"
+            }}
+          >
+            {icon}
+          </motion.div>
+        </div>
+        <div>
+          <h3 className="text-xl font-semibold mb-2 text-white mt-6 group-hover:text-primary transition-colors duration-300">{title}</h3>
+          <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
+        </div>
+        <motion.div 
+          className="flex items-center text-primary text-sm font-medium mt-4"
+          initial={{ opacity: 0, x: -20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <span className="mr-2">Learn more</span>
+          <motion.div
+            animate={{ x: [0, 5, 0] }}
+            transition={{ 
+              repeat: Infinity, 
+              repeatType: "loop", 
+              duration: 1.5,
+              ease: "easeInOut"
+            }}
+          >
+            <ChevronRight size={16} />
+          </motion.div>
+        </motion.div>
       </div>
-      <div>
-        <h3 className="text-xl font-semibold mb-2 text-white">{title}</h3>
-        <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
-      </div>
-      <div className="flex items-center text-primary text-sm font-medium opacity-0 transform -translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
-        <span className="mr-2">Learn more</span>
-        <ChevronRight size={16} />
-      </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -53,40 +94,99 @@ function PricingCard({
   popular = false,
 }: PricingCardProps) {
   return (
-    <div className={cn(
-      "rounded-xl border p-8 relative transition-all duration-300 hover:border-primary",
-      popular ? "border-primary bg-gray-900" : "border-gray-800 bg-gray-900/50"
-    )}>
-      {popular && (
-        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-white px-3 py-1 rounded-full text-xs font-semibold">
-          Most Popular
-        </div>
+    <motion.div 
+      className={cn(
+        "rounded-xl border p-8 relative backdrop-blur-md transition-all duration-300",
+        popular 
+          ? "border-primary/50 bg-gray-900/80 shadow-lg shadow-primary/20" 
+          : "border-gray-800/50 bg-gray-900/40 hover:border-primary/30"
       )}
-      <div className="flex flex-col gap-4">
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ 
+        duration: 0.6, 
+        delay: popular ? 0 : 0.2,
+        type: "spring",
+        stiffness: 50
+      }}
+      whileHover={{ 
+        y: -5,
+        boxShadow: popular 
+          ? "0 25px 50px -12px rgba(79, 70, 229, 0.35)" 
+          : "0 15px 30px -12px rgba(0, 0, 0, 0.3)"
+      }}
+    >
+      {/* Glass morphism blur effect */}
+      <div className={cn(
+        "absolute inset-0 rounded-xl bg-gradient-to-b opacity-20 blur-xl -z-10",
+        popular 
+          ? "from-primary/40 to-indigo-600/30" 
+          : "from-gray-700/30 to-gray-900/20"
+      )} />
+      
+      {popular && (
+        <motion.div 
+          className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-white px-4 py-1 rounded-full text-xs font-semibold shadow-lg"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.3 }}
+        >
+          Most Popular
+        </motion.div>
+      )}
+      
+      <motion.div 
+        className="flex flex-col gap-4"
+        transition={{ staggerChildren: 0.1 }}
+      >
         <h3 className="text-xl font-bold text-white">{title}</h3>
         <div className="mt-2">
-          <span className="text-4xl font-bold text-white">{price}</span>
+          <span className={cn(
+            "text-4xl font-bold",
+            popular ? "bg-gradient-to-r from-blue-400 to-indigo-600 bg-clip-text text-transparent" : "text-white"
+          )}>{price}</span>
           {price !== "Free" && <span className="text-gray-400">/month</span>}
         </div>
         <p className="text-gray-400 mt-2 text-sm">{description}</p>
+        
         <ul className="mt-6 space-y-3">
           {features.map((feature, index) => (
-            <li key={index} className="flex items-start gap-3">
-              <span className="mt-1 text-primary">
+            <motion.li 
+              key={index} 
+              className="flex items-start gap-3"
+              initial={{ opacity: 0, x: -10 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 + (index * 0.1) }}
+            >
+              <motion.span 
+                className={cn(
+                  "mt-1 rounded-full",
+                  popular ? "text-primary" : "text-blue-400"
+                )}
+                whileHover={{ scale: 1.2 }}
+              >
                 <Check size={16} />
-              </span>
+              </motion.span>
               <span className="text-sm text-gray-300">{feature}</span>
-            </li>
+            </motion.li>
           ))}
         </ul>
-        <Button className={cn(
-          "mt-8 w-full",
-          popular ? "bg-primary hover:bg-primary/90" : "bg-gray-800 hover:bg-gray-700 text-white"
-        )}>
-          {buttonText}
-        </Button>
-      </div>
-    </div>
+        
+        <motion.div
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <Button className={cn(
+            "mt-8 w-full shadow-lg transition-all duration-300",
+            popular 
+              ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:opacity-90 text-white border-0" 
+              : "bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
+          )}>
+            {buttonText}
+          </Button>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -204,55 +304,215 @@ export default function LandingPage() {
         <div className="relative z-10 container mx-auto px-6 py-20">
           <div className="max-w-6xl mx-auto">
             <div className="flex flex-col md:flex-row items-center gap-16">
-              <div className="md:w-3/5 text-center md:text-left">
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                  AI Fashion <br />
-                  <span className="bg-gradient-to-r from-blue-400 to-indigo-600 bg-clip-text text-transparent">
-                    Assistant
-                  </span> <br />
-                  on WhatsApp
-                </h1>
-                <p className="mt-8 text-lg text-gray-400 max-w-xl">
-                  Discover your perfect style with personalized color recommendations, 
-                  virtual try-ons, and curated shopping suggestions.
-                </p>
-                <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                  <Button 
-                    size="lg" 
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:opacity-90 transition-opacity text-white border-0 px-8 py-6"
-                    asChild
-                  >
-                    <Link href="/auth">Get Started</Link>
-                  </Button>
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    className="text-white border-gray-700 hover:bg-gray-900 px-8 py-6"
-                    onClick={() => {
-                      document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+              <motion.div 
+                className="md:w-3/5 text-center md:text-left"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8 }}
+              >
+                {/* Floating 3D Text with Neon Glow */}
+                <div className="relative mb-4">
+                  {/* Text shadow blur for neon effect */}
+                  <div className="absolute -inset-1 blur-xl bg-gradient-to-r from-blue-600/20 to-indigo-600/20 opacity-70"></div>
+                  
+                  <motion.h1 
+                    className="relative text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-tight"
+                    initial={{ y: 20 }}
+                    animate={{ y: 0 }}
+                    transition={{ 
+                      type: "spring",
+                      stiffness: 100,
+                      damping: 20
                     }}
                   >
-                    How it Works
-                  </Button>
+                    <motion.span 
+                      className="block bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent drop-shadow-xl"
+                      animate={{ 
+                        y: [0, -8, 0],
+                        rotateX: [0, 2, 0],
+                        textShadow: [
+                          "0 0 5px rgba(255,255,255,0.1)",
+                          "0 0 15px rgba(255,255,255,0.3)",
+                          "0 0 5px rgba(255,255,255,0.1)"
+                        ]
+                      }}
+                      transition={{ 
+                        duration: 6, 
+                        repeat: Infinity,
+                        repeatType: "reverse"
+                      }}
+                    >
+                      AI Fashion
+                    </motion.span>
+                    
+                    <motion.span 
+                      className="block bg-gradient-to-r from-blue-400 to-indigo-600 bg-clip-text text-transparent drop-shadow-xl"
+                      animate={{ 
+                        y: [0, -5, 0],
+                        rotateX: [0, 5, 0],
+                        textShadow: [
+                          "0 0 5px rgba(79, 70, 229, 0.2)",
+                          "0 0 20px rgba(79, 70, 229, 0.6)",
+                          "0 0 5px rgba(79, 70, 229, 0.2)"
+                        ]
+                      }}
+                      transition={{ 
+                        duration: 5, 
+                        repeat: Infinity,
+                        repeatType: "reverse",
+                        delay: 0.5
+                      }}
+                    >
+                      Assistant
+                    </motion.span>
+                    
+                    <motion.span 
+                      className="block text-transparent bg-clip-text bg-gradient-to-r from-gray-100 to-gray-400 drop-shadow-xl"
+                      animate={{ 
+                        y: [0, -3, 0],
+                        rotateX: [0, 3, 0],
+                        textShadow: [
+                          "0 0 5px rgba(255,255,255,0.1)",
+                          "0 0 10px rgba(255,255,255,0.2)",
+                          "0 0 5px rgba(255,255,255,0.1)"
+                        ]
+                      }}
+                      transition={{ 
+                        duration: 7, 
+                        repeat: Infinity,
+                        repeatType: "reverse",
+                        delay: 1
+                      }}
+                    >
+                      on WhatsApp
+                    </motion.span>
+                  </motion.h1>
                 </div>
+                
+                <motion.p 
+                  className="mt-8 text-lg text-gray-400 max-w-xl"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.6 }}
+                >
+                  Discover your perfect style with personalized color recommendations, 
+                  virtual try-ons, and curated shopping suggestions.
+                </motion.p>
+                
+                <motion.div 
+                  className="mt-10 flex flex-col sm:flex-row gap-4 justify-center md:justify-start"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6, duration: 0.6 }}
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.05, y: -5 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Button 
+                      size="lg" 
+                      className="relative bg-gradient-to-r from-blue-600 to-indigo-600 hover:opacity-90 transition-all duration-300 text-white border-0 px-8 py-6 overflow-hidden group"
+                      asChild
+                    >
+                      <Link href="/auth">
+                        {/* Animation glow effect */}
+                        <span className="absolute -inset-px bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 group-hover:opacity-20 group-hover:blur-md transition-all duration-300 rounded-md"></span>
+                        Get Started
+                      </Link>
+                    </Button>
+                  </motion.div>
+                  
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Button 
+                      size="lg" 
+                      variant="outline" 
+                      className="text-white border-gray-700 hover:bg-gray-900 px-8 py-6 transition-all duration-300"
+                      onClick={() => {
+                        document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                    >
+                      How it Works
+                    </Button>
+                  </motion.div>
+                </motion.div>
 
-                <div className="mt-16 flex items-center gap-10 justify-center md:justify-start">
-                  <div className="flex flex-col items-center md:items-start">
-                    <p className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-indigo-600 bg-clip-text text-transparent">10K+</p>
+                <motion.div 
+                  className="mt-16 flex items-center gap-10 justify-center md:justify-start"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.9, duration: 0.6 }}
+                >
+                  <motion.div 
+                    className="flex flex-col items-center md:items-start"
+                    whileHover={{ scale: 1.1, y: -5 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <motion.p 
+                      className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-indigo-600 bg-clip-text text-transparent"
+                      animate={{
+                        textShadow: [
+                          "0 0 3px rgba(79, 70, 229, 0.2)",
+                          "0 0 8px rgba(79, 70, 229, 0.4)",
+                          "0 0 3px rgba(79, 70, 229, 0.2)"
+                        ]
+                      }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      10K+
+                    </motion.p>
                     <p className="text-sm text-gray-400">Happy Users</p>
-                  </div>
+                  </motion.div>
+                  
                   <div className="hidden md:block w-px h-10 bg-gray-800"></div>
-                  <div className="flex flex-col items-center md:items-start">
-                    <p className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-indigo-600 bg-clip-text text-transparent">50K+</p>
+                  
+                  <motion.div 
+                    className="flex flex-col items-center md:items-start"
+                    whileHover={{ scale: 1.1, y: -5 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <motion.p 
+                      className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-indigo-600 bg-clip-text text-transparent"
+                      animate={{
+                        textShadow: [
+                          "0 0 3px rgba(79, 70, 229, 0.2)",
+                          "0 0 8px rgba(79, 70, 229, 0.4)",
+                          "0 0 3px rgba(79, 70, 229, 0.2)"
+                        ]
+                      }}
+                      transition={{ duration: 2, repeat: Infinity, delay: 0.3 }}
+                    >
+                      50K+
+                    </motion.p>
                     <p className="text-sm text-gray-400">Color Analyses</p>
-                  </div>
+                  </motion.div>
+                  
                   <div className="hidden md:block w-px h-10 bg-gray-800"></div>
-                  <div className="flex flex-col items-center md:items-start">
-                    <p className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-indigo-600 bg-clip-text text-transparent">90%</p>
+                  
+                  <motion.div 
+                    className="flex flex-col items-center md:items-start"
+                    whileHover={{ scale: 1.1, y: -5 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <motion.p 
+                      className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-indigo-600 bg-clip-text text-transparent"
+                      animate={{
+                        textShadow: [
+                          "0 0 3px rgba(79, 70, 229, 0.2)",
+                          "0 0 8px rgba(79, 70, 229, 0.4)",
+                          "0 0 3px rgba(79, 70, 229, 0.2)"
+                        ]
+                      }}
+                      transition={{ duration: 2, repeat: Infinity, delay: 0.6 }}
+                    >
+                      90%
+                    </motion.p>
                     <p className="text-sm text-gray-400">Satisfaction Rate</p>
-                  </div>
-                </div>
-              </div>
+                  </motion.div>
+                </motion.div>
+              </motion.div>
 
               <div className="md:w-2/5 mt-12 md:mt-0 order-first md:order-last">
                 <div className="relative h-[580px] w-[300px] mx-auto">
